@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="AI语音助手"
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+        android:usesCleartextTraffic="true">
+        
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name=".MainActivity" />
+        
+        <!-- 个人中心 -->
+        <activity android:name=".ProfileActivity" />
+        
+        <!-- 论坛 -->
+        <activity android:name=".ForumActivity" />
+        <activity android:name=".PostDetailActivity" />
+        
+        <!-- 私信 -->
+        <activity android:name=".MessagesActivity" />
+        <activity android:name=".ChatActivity" />
+        
+        <!-- 模型切换（赞助者专用） -->
+        <activity android:name=".ModelSelectActivity" />
+        
+    </application>
+
+</manifest>
