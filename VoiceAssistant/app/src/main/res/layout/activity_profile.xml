@@ -3,21 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#F0F2F5">
+    android:background="@color/background">
 
     <androidx.appcompat.widget.Toolbar
+        style="@style/AppToolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#667eea">
+        android:layout_height="64dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Profile"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:text="个人资料"
+            style="@style/AppToolbarTitle" />
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -26,7 +24,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="28dp"
         android:src="@drawable/ic_default_avatar" />
 
     <TextView
@@ -34,45 +32,51 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="8dp"
-        android:text="Change Avatar"
-        android:textColor="#667eea"
+        android:text="更换头像"
+        android:textColor="@color/primary"
         android:textSize="12sp" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="24dp"
+        android:layout_marginEnd="20dp"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <EditText
             android:id="@+id/et_nickname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nickname" />
+            android:hint="昵称" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <EditText
             android:id="@+id/et_signature"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Signature"
+            android:hint="个性签名"
             android:maxLines="3" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/btn_save"
+        style="@style/AppPrimaryButton"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="54dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="24dp"
-        android:text="Save"
-        android:backgroundTint="#667eea" />
+        android:layout_marginEnd="20dp"
+        android:text="保存" />
 
 </LinearLayout>

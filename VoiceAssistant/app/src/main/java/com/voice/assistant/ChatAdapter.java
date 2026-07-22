@@ -39,22 +39,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         Message msg = messages.get(position);
         
         if (msg.isUser()) {
-            holder.llUser.setVisibility(View.VISIBLE);
-            holder.llAi.setVisibility(View.GONE);
-            holder.tvUserMsg.setText(msg.getContent());
+            holder.llSent.setVisibility(View.VISIBLE);
+            holder.llReceived.setVisibility(View.GONE);
+            holder.tvSent.setText(msg.getContent());
         } else {
-            holder.llUser.setVisibility(View.GONE);
-            holder.llAi.setVisibility(View.VISIBLE);
-            holder.tvAiMsg.setText(msg.getContent());
-            
-            if (msg.getAudioBase64() != null) {
-                holder.btnPlay.setVisibility(View.VISIBLE);
-                holder.btnPlay.setOnClickListener(v -> {
-                    if (playClickListener != null) {
-                        playClickListener.onPlayClick(position);
-                    }
-                });
-            }
+            holder.llSent.setVisibility(View.GONE);
+            holder.llReceived.setVisibility(View.VISIBLE);
+            holder.tvReceived.setText(msg.getContent());
         }
     }
     
@@ -64,17 +55,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     }
     
     static class ViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout llUser, llAi;
-        TextView tvUserMsg, tvAiMsg;
-        ImageButton btnPlay;
+        LinearLayout llSent, llReceived;
+        TextView tvSent, tvReceived;
         
         ViewHolder(View itemView) {
             super(itemView);
-            llUser = itemView.findViewById(R.id.ll_user);
-            llAi = itemView.findViewById(R.id.ll_ai);
-            tvUserMsg = itemView.findViewById(R.id.tv_user_msg);
-            tvAiMsg = itemView.findViewById(R.id.tv_ai_msg);
-            btnPlay = itemView.findViewById(R.id.btn_play);
+            llSent = itemView.findViewById(R.id.ll_sent);
+            llReceived = itemView.findViewById(R.id.ll_received);
+            tvSent = itemView.findViewById(R.id.tv_sent);
+            tvReceived = itemView.findViewById(R.id.tv_received);
         }
     }
 }

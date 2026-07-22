@@ -1,4 +1,4 @@
-﻿package com.voice.assistant;
+package com.voice.assistant;
 
 import android.Manifest;
 import android.content.Intent;
@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;

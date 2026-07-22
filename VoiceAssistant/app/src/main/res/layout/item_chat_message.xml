@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginBottom="8dp">
+    android:layout_marginBottom="10dp">
 
     <LinearLayout
         android:id="@+id/ll_sent"
@@ -16,11 +16,15 @@
             android:id="@+id/tv_sent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="250dp"
+            android:maxWidth="280dp"
             android:background="@drawable/bg_user_msg"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:padding="12dp" />
+            android:textSize="15sp"
+            android:lineSpacingExtra="2dp"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="10dp" />
 
     </LinearLayout>
 
@@ -35,11 +39,15 @@
             android:id="@+id/tv_received"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="250dp"
+            android:maxWidth="280dp"
             android:background="@drawable/bg_ai_msg"
-            android:textColor="#333333"
-            android:textSize="14sp"
-            android:padding="12dp" />
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:lineSpacingExtra="2dp"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="10dp" />
 
     </LinearLayout>
 

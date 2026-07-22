@@ -1,10 +1,11 @@
-﻿package com.voice.assistant;
+package com.voice.assistant;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import okhttp3.*;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class ApiClient {
     
     // ========== 认证相关 ==========
     
-    public String login(String username, String password) throws IOException {
+    public String login(String username, String password) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("username", username);
         body.put("password", password);
@@ -43,7 +44,7 @@ public class ApiClient {
         }
     }
     
-    public String register(String username, String password) throws IOException {
+    public String register(String username, String password) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("username", username);
         body.put("password", password);
@@ -103,12 +104,12 @@ public class ApiClient {
         }
     }
     
-    public String textChat(String message, String token) throws IOException {
+    public String textChat(String message, String token) throws IOException, JSONException {
         return textChat(message, token, null, false, null);
     }
     
     public String textChat(String message, String token, String model,
-                           boolean enableThinking, String customPrompt) throws IOException {
+                           boolean enableThinking, String customPrompt) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("message", message);
         if (model != null && !model.isEmpty()) {
@@ -144,7 +145,7 @@ public class ApiClient {
         }
     }
     
-    public String updateProfile(String nickname, String signature, String token) throws IOException {
+    public String updateProfile(String nickname, String signature, String token) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("nickname", nickname);
         body.put("signature", signature);
@@ -186,7 +187,7 @@ public class ApiClient {
         }
     }
     
-    public String createForumPost(String title, String content, String token) throws IOException {
+    public String createForumPost(String title, String content, String token) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("title", title);
         body.put("content", content);
@@ -202,7 +203,7 @@ public class ApiClient {
         }
     }
     
-    public String createForumReply(Long postId, String content, String token) throws IOException {
+    public String createForumReply(Long postId, String content, String token) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("postId", postId);
         body.put("content", content);
@@ -244,7 +245,7 @@ public class ApiClient {
         }
     }
     
-    public String sendMessage(Long toUserId, String content, String token) throws IOException {
+    public String sendMessage(Long toUserId, String content, String token) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("toUserId", toUserId);
         body.put("content", content);

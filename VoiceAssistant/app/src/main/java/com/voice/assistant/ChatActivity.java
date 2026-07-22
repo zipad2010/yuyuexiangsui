@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         
         targetUserId = getIntent().getLongExtra("targetUserId", 0);
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         handler = new Handler(Looper.getMainLooper());
         
@@ -52,7 +53,7 @@ public class ChatActivity extends AppCompatActivity {
         
         btnSend.setOnClickListener(v -> sendMessage());
         
-        // √ø3√ÎÀ¢–¬“ª¥Œœ˚œ¢
+        // ÊØè3ÁßíÂà∑Êñ∞‰∏ÄÊ¨°Ê∂àÊÅØ
         refreshRunnable = () -> {
             loadConversation();
             handler.postDelayed(refreshRunnable, 3000);
@@ -73,8 +74,8 @@ public class ChatActivity extends AppCompatActivity {
     }
     
     private long getCurrentUserId() {
-        // ¥” tokenManager ªÒ»°µ±«∞”√ªßID
-        return 1; // ¡Ÿ ±∑µªÿ£¨ µº –Ë“™ µœ÷
+        // ‰ªé tokenManager Ëé∑ÂèñÂΩìÂâçÁî®Êà∑ID
+        return 1; // ‰∏¥Êó∂ËøîÂõûÔºåÂÆûÈôÖÈúÄË¶ÅÂÆûÁé∞
     }
     
     private void loadConversation() {
@@ -82,26 +83,33 @@ public class ChatActivity extends AppCompatActivity {
             try {
                 String response = apiClient.getConversation(targetUserId, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
-                if (json.getInt("code") == 200) {
-                    JSONArray data = json.getJSONArray("data");
-                    runOnUiThread(() -> {
-                        messages.clear();
-                        for (int i = 0; i < data.length(); i++) {
-                            messages.add(data.getJSONObject(i));
+                int code = json.optInt("code", -1);
+                JSONArray data = json.optJSONArray("data");
+                List<JSONObject> newMessages = new ArrayList<>();
+                if (code == 200 && data != null) {
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject message = data.optJSONObject(i);
+                        if (message != null) {
+                            newMessages.add(message);
                         }
-                        adapter.notifyDataSetChanged();
-                        rvMessages.scrollToPosition(messages.size() - 1);
-                        
-                        if (messages.size() > 0) {
-                            JSONObject first = messages.get(0);
-                            targetUsername = first.optString("fromUsername", "User");
-                            if (targetUsername.equals(tokenManager.getUsername())) {
-                                targetUsername = first.optString("toUsername", "User");
-                            }
-                            tvTitle.setText(targetUsername);
-                        }
-                    });
+                    }
                 }
+                runOnUiThread(() -> {
+                    messages.clear();
+                    messages.addAll(newMessages);
+                    adapter.notifyDataSetChanged();
+                    if (messages.size() > 0) {
+                        JSONObject first = messages.get(0);
+                        targetUsername = first.optString("fromUsername", "User");
+                        if (targetUsername.equals(tokenManager.getUsername())) {
+                            targetUsername = first.optString("toUsername", "User");
+                        }
+                        tvTitle.setText(targetUsername);
+                    }
+                    if (messages.size() > 0) {
+                        rvMessages.scrollToPosition(messages.size() - 1);
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -119,10 +127,14 @@ public class ChatActivity extends AppCompatActivity {
                 String response = apiClient.sendMessage(targetUserId, content, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
                 runOnUiThread(() -> {
-                    if (json.getInt("code") == 200) {
-                        loadConversation();
-                    } else {
-                        Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+                    try {
+                        if (json.getInt("code") == 200) {
+                            loadConversation();
+                        } else {
+                            Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException ex) {
+                        Toast.makeText(this, "JSONËß£ÊûêÂ§±Ë¥•", Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {

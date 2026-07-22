@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class PostDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_detail);
         
         postId = getIntent().getLongExtra("postId", 0);
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         
         initViews();
@@ -61,16 +62,18 @@ public class PostDetailActivity extends AppCompatActivity {
             try {
                 String response = apiClient.getForumPost(postId, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
-                if (json.getInt("code") == 200) {
-                    JSONObject data = json.getJSONObject("data");
-                    JSONArray repliesArray = data.optJSONArray("replies");
+                if (json.optInt("code", -1) == 200) {
+                    JSONObject data = json.optJSONObject("data");
+                    JSONArray repliesArray = data != null ? data.optJSONArray("replies") : null;
+                    List<JSONObject> newReplies = new ArrayList<>();
+                    if (repliesArray != null) {
+                        for (int i = 0; i < repliesArray.length(); i++) {
+                            newReplies.add(repliesArray.optJSONObject(i));
+                        }
+                    }
                     runOnUiThread(() -> {
                         replies.clear();
-                        if (repliesArray != null) {
-                            for (int i = 0; i < repliesArray.length(); i++) {
-                                replies.add(repliesArray.getJSONObject(i));
-                            }
-                        }
+                        replies.addAll(newReplies);
                         adapter.notifyDataSetChanged();
                     });
                 }
@@ -91,13 +94,15 @@ public class PostDetailActivity extends AppCompatActivity {
             try {
                 String response = apiClient.createForumReply(postId, content, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
+                int code = json.getInt("code");
+                String message = json.optString("message", "Reply sent");
                 runOnUiThread(() -> {
-                    if (json.getInt("code") == 200) {
+                    if (code == 200) {
                         etReply.setText("");
                         loadReplies();
                         Toast.makeText(this, "Reply sent", Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {

@@ -23,7 +23,7 @@ public class MessagesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages);
         
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         
         initViews();
@@ -34,7 +34,7 @@ public class MessagesActivity extends AppCompatActivity {
         rvConversations = findViewById(R.id.rv_conversations);
         conversations = new ArrayList<>();
         adapter = new ConversationAdapter(conversations, userId -> {
-            // 打开聊天页面
+            // 鎵撳紑鑱婂ぉ椤甸潰
             startActivity(ChatActivity.newIntent(this, userId));
         });
         rvConversations.setLayoutManager(new LinearLayoutManager(this));
@@ -48,11 +48,13 @@ public class MessagesActivity extends AppCompatActivity {
                 JSONObject json = new JSONObject(response);
                 if (json.getInt("code") == 200) {
                     JSONArray data = json.getJSONArray("data");
+                    List<JSONObject> newConversations = new ArrayList<>();
+                    for (int i = 0; i < data.length(); i++) {
+                        newConversations.add(data.getJSONObject(i));
+                    }
                     runOnUiThread(() -> {
                         conversations.clear();
-                        for (int i = 0; i < data.length(); i++) {
-                            conversations.add(data.getJSONObject(i));
-                        }
+                        conversations.addAll(newConversations);
                         adapter.notifyDataSetChanged();
                     });
                 }

@@ -44,7 +44,7 @@ public class AudioPlayer {
             FileOutputStream fos = new FileOutputStream(tempFile);
             fos.write(audioData);
             fos.close();
-            Log.d("AudioPlayer", " ’µΩ“Ù∆µ: " + audioData.length + " bytes");
+            Log.d("AudioPlayer", "Êî∂Âà∞Èü≥È¢ë: " + audioData.length + " bytes");
             if (onComplete != null) onComplete.run();
         } catch (Exception e) {
             e.printStackTrace();

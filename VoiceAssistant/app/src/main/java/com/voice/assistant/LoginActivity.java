@@ -1,6 +1,7 @@
 package com.voice.assistant;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,10 +14,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.gson.Gson;
-import com.guolindev.permissionx.PermissionX;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
@@ -37,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         
         mainHandler = new Handler(Looper.getMainLooper());
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         
         if (tokenManager.isLoggedIn()) {
@@ -47,9 +50,12 @@ public class LoginActivity extends AppCompatActivity {
         
         initViews();
         
-        PermissionX.init(this)
-            .permissions(android.Manifest.permission.RECORD_AUDIO)
-            .request((allGranted, grantedList, deniedList) -> {});
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.RECORD_AUDIO},
+                    1001);
+        }
     }
     
     private void initViews() {
@@ -70,11 +76,11 @@ public class LoginActivity extends AppCompatActivity {
         tvRegister.setOnClickListener(v -> {
             isRegisterMode = !isRegisterMode;
             if (isRegisterMode) {
-                btnLogin.setText("×¢²á");
-                tvRegister.setText("ÒÑÓĞÕËºÅ£¿È¥µÇÂ¼");
+                btnLogin.setText("æ³¨å†Œ");
+                tvRegister.setText("å·²æœ‰è´¦å·ï¼Ÿå»ç™»å½•");
             } else {
-                btnLogin.setText("µÇÂ¼");
-                tvRegister.setText("»¹Ã»ÓĞÕËºÅ£¿Á¢¼´×¢²á");
+                btnLogin.setText("ç™»å½•");
+                tvRegister.setText("è¿˜æ²¡æœ‰è´¦å·ï¼Ÿç«‹å³æ³¨å†Œ");
             }
         });
     }
@@ -84,7 +90,7 @@ public class LoginActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         
         if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "ÇëÊäÈëÓÃ»§ÃûºÍÃÜÂë", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "è¯·è¾“å…¥ç”¨æˆ·åå’Œå¯†ç ", Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -94,30 +100,37 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 String response = apiClient.login(username, password);
                 JSONObject json = new JSONObject(response);
-                
+                int code = json.getInt("code");
+                String message = json.optString("message", "ç™»å½•å¤±è´¥");
+                String token = null;
+                String returnedUsername = null;
+                String balance = null;
+                if (code == 200) {
+                    JSONObject data = json.getJSONObject("data");
+                    token = data.optString("token", null);
+                    returnedUsername = data.optString("username", null);
+                    balance = data.optString("balance", null);
+                }
+                final int finalCode = code;
+                final String finalMessage = message;
+                final String finalToken = token;
+                final String finalReturnedUsername = returnedUsername;
+                final String finalBalance = balance;
+
                 mainHandler.post(() -> {
                     setLoading(false);
-                    try {
-                        if (json.getInt("code") == 200) {
-                            JSONObject data = json.getJSONObject("data");
-                            tokenManager.saveToken(
-                                data.getString("token"),
-                                data.getString("username"),
-                                data.getString("balance")
-                            );
-                            Toast.makeText(this, "µÇÂ¼³É¹¦", Toast.LENGTH_SHORT).show();
-                            startMainActivity();
-                        } else {
-                            Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Exception e) {
-                        Toast.makeText(this, "½âÎöÊ§°Ü", Toast.LENGTH_SHORT).show();
+                    if (finalCode == 200 && finalToken != null && finalReturnedUsername != null) {
+                        tokenManager.saveToken(finalToken, finalReturnedUsername, finalBalance);
+                        Toast.makeText(this, "ç™»å½•æˆåŠŸ", Toast.LENGTH_SHORT).show();
+                        startMainActivity();
+                    } else {
+                        Toast.makeText(this, finalMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {
                 mainHandler.post(() -> {
                     setLoading(false);
-                    Toast.makeText(this, "ÍøÂç´íÎó: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "ç½‘ç»œé”™è¯¯: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
@@ -128,12 +141,12 @@ public class LoginActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         
         if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "ÇëÊäÈëÓÃ»§ÃûºÍÃÜÂë", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "è¯·è¾“å…¥ç”¨æˆ·åå’Œå¯†ç ", Toast.LENGTH_SHORT).show();
             return;
         }
         
         if (password.length() < 4) {
-            Toast.makeText(this, "ÃÜÂëÖÁÉÙ4Î»", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "å¯†ç è‡³å°‘4ä½", Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -143,22 +156,24 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 String response = apiClient.register(username, password);
                 JSONObject json = new JSONObject(response);
+                int code = json.getInt("code");
+                String message = json.optString("message", "æ³¨å†ŒæˆåŠŸï¼Œè¯·ç™»å½•");
                 
                 mainHandler.post(() -> {
                     setLoading(false);
-                    if (json.getInt("code") == 200) {
-                        Toast.makeText(this, "×¢²á³É¹¦£¬ÇëµÇÂ¼", Toast.LENGTH_SHORT).show();
+                    if (code == 200) {
+                        Toast.makeText(this, "æ³¨å†ŒæˆåŠŸï¼Œè¯·ç™»å½•", Toast.LENGTH_SHORT).show();
                         isRegisterMode = false;
-                        btnLogin.setText("µÇÂ¼");
-                        tvRegister.setText("»¹Ã»ÓĞÕËºÅ£¿Á¢¼´×¢²á");
+                        btnLogin.setText("ç™»å½•");
+                        tvRegister.setText("è¿˜æ²¡æœ‰è´¦å·ï¼Ÿç«‹å³æ³¨å†Œ");
                     } else {
-                        Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {
                 mainHandler.post(() -> {
                     setLoading(false);
-                    Toast.makeText(this, "ÍøÂç´íÎó: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "ç½‘ç»œé”™è¯¯: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();

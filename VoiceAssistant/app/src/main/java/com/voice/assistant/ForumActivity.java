@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class ForumActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forum);
         
-        apiClient = new ApiClient();
+        apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         
         initViews();
@@ -55,11 +56,13 @@ public class ForumActivity extends AppCompatActivity {
                 JSONObject json = new JSONObject(response);
                 if (json.getInt("code") == 200) {
                     JSONArray data = json.getJSONArray("data");
+                    List<JSONObject> loadedPosts = new ArrayList<>();
+                    for (int i = 0; i < data.length(); i++) {
+                        loadedPosts.add(data.getJSONObject(i));
+                    }
                     runOnUiThread(() -> {
                         posts.clear();
-                        for (int i = 0; i < data.length(); i++) {
-                            posts.add(data.getJSONObject(i));
-                        }
+                        posts.addAll(loadedPosts);
                         adapter.notifyDataSetChanged();
                     });
                 }
@@ -93,12 +96,14 @@ public class ForumActivity extends AppCompatActivity {
             try {
                 String response = apiClient.createForumPost(title, content, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
+                int code = json.getInt("code");
+                String message = json.optString("message", "Posted");
                 runOnUiThread(() -> {
-                    if (json.getInt("code") == 200) {
+                    if (code == 200) {
                         Toast.makeText(this, "Posted", Toast.LENGTH_SHORT).show();
                         loadPosts();
                     } else {
-                        Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (Exception e) {
@@ -108,7 +113,7 @@ public class ForumActivity extends AppCompatActivity {
     }
     
     private void showPostDetail(Long postId) {
-        // ¥Úø™Ã˚◊”œÍ«È“≥
+        // ÊâìÂºÄÂ∏ñÂ≠êËØ¶ÊÉÖÈ°µ
         startActivity(PostDetailActivity.newIntent(this, postId));
     }
 }

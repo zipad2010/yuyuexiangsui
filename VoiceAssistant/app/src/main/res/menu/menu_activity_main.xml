@@ -3,38 +3,38 @@
 
     <item
         android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_home"
-        android:title="Ê×Ò³" />
+        android:icon="@drawable/ic_home"
+        android:title="é¦–é¡µ" />
 
     <item
         android:id="@+id/nav_profile"
-        android:icon="@android:drawable/ic_menu_edit"
-        android:title="¸öÈËÖÐÐÄ" />
+        android:icon="@drawable/ic_edit"
+        android:title="ä¸ªäººä¸­å¿ƒ" />
 
     <item
         android:id="@+id/nav_forum"
-        android:icon="@android:drawable/ic_menu_discuss"
-        android:title="ÂÛÌ³" />
+        android:icon="@drawable/ic_forum"
+        android:title="è®ºå›" />
 
     <item
         android:id="@+id/nav_messages"
-        android:icon="@android:drawable/ic_menu_send"
-        android:title="Ë½ÐÅ" />
+        android:icon="@drawable/ic_send"
+        android:title="ç§ä¿¡" />
 
-    <!-- Ä£ÐÍÇÐ»»²Ëµ¥Ïî£¨½öÔÞÖúÕß¿É¼û£© -->
+    <!-- æ¨¡åž‹åˆ‡æ¢èœå•é¡¹ï¼ˆä»…èµžåŠ©è€…å¯è§ï¼‰ -->
     <item
         android:id="@+id/nav_model"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="Ä£ÐÍÇÐ»»" />
+        android:icon="@drawable/ic_manage"
+        android:title="æ¨¡åž‹åˆ‡æ¢" />
 
     <item
         android:id="@+id/nav_balance"
-        android:icon="@android:drawable/ic_menu_info_details"
-        android:title="Óà¶î" />
+        android:icon="@drawable/ic_info"
+        android:title="ä½™é¢" />
 
     <item
         android:id="@+id/nav_logout"
-        android:icon="@android:drawable/ic_menu_close_clear_cancel"
-        android:title="ÍË³öµÇÂ¼" />
+        android:icon="@drawable/ic_logout"
+        android:title="é€€å‡ºç™»å½•" />
 
 </menu>

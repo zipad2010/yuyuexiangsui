@@ -7,9 +7,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="AIÓïÒôÖúÊÖ"
-        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+        android:icon="@drawable/ic_launcher"
+        android:label="AIè¯­éŸ³åŠ©æ‰‹"
+        android:theme="@style/Theme.VoiceAssistant"
         android:usesCleartextTraffic="true">
         
         <activity
@@ -23,18 +23,18 @@
         
         <activity android:name=".MainActivity" />
         
-        <!-- ¸öÈËÖÐÐÄ -->
+        <!-- ä¸ªäººä¸­å¿ƒ -->
         <activity android:name=".ProfileActivity" />
         
-        <!-- ÂÛÌ³ -->
+        <!-- è®ºå› -->
         <activity android:name=".ForumActivity" />
         <activity android:name=".PostDetailActivity" />
         
-        <!-- Ë½ÐÅ -->
+        <!-- ç§ä¿¡ -->
         <activity android:name=".MessagesActivity" />
         <activity android:name=".ChatActivity" />
         
-        <!-- Ä£ÐÍÇÐ»»£¨ÔÞÖúÕß×¨ÓÃ£© -->
+        <!-- æ¨¡åž‹åˆ‡æ¢ï¼ˆèµžåŠ©è€…ä¸“ç”¨ï¼‰ -->
         <activity android:name=".ModelSelectActivity" />
         
     </application>

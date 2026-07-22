@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F2F5">
+    android:background="@color/background">
 
     <androidx.appcompat.widget.Toolbar
+        style="@style/AppToolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#667eea">
+        android:layout_height="64dp">
 
         <TextView
             android:id="@+id/tv_chat_title"
@@ -16,8 +17,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="Chat"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            style="@style/AppToolbarTitle" />
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -26,33 +26,40 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="12dp"
+        android:padding="16dp"
         android:clipToPadding="false" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="12dp"
         android:orientation="horizontal"
-        android:padding="12dp"
-        android:background="@android:color/white"
-        android:elevation="8dp">
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        android:background="@drawable/bg_composer"
+        android:elevation="2dp">
 
         <EditText
             android:id="@+id/et_message"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:hint="Type a message..."
-            android:background="@drawable/bg_input"
-            android:padding="12dp" />
+            android:hint="输入消息"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted" />
 
         <ImageButton
             android:id="@+id/btn_send_message"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@android:drawable/ic_menu_send"
+            android:src="@drawable/ic_send"
+            android:contentDescription="发送消息"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:tint="#667eea" />
+            app:tint="@color/primary" />
 
     </LinearLayout>
 

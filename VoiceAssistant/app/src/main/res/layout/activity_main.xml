@@ -4,45 +4,54 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background">
 
     <!-- 主内容 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/background"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
+            style="@style/AppToolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/purple_500">
+            android:layout_height="64dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp">
 
             <ImageButton
                 android:id="@+id/btn_menu"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:src="@android:drawable/ic_menu_sort_by_size"
+                android:contentDescription="打开菜单"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:tint="@android:color/white" />
+                app:tint="@android:color/white" />
 
             <TextView
+                android:id="@+id/tv_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="center"
-                android:text="AI Voice Assistant"
-                android:textColor="@android:color/white"
-                android:textSize="18sp" />
+                android:gravity="start|center_vertical"
+                android:text="AI 语音助手"
+                style="@style/AppToolbarTitle" />
 
             <TextView
                 android:id="@+id/tv_balance"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_balance"
+                android:gravity="center"
+                android:minWidth="74dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
                 android:text="Balance: ¥0"
                 android:textColor="@android:color/white"
-                android:textSize="12sp"
-                android:layout_marginEnd="16dp" />
+                android:textSize="12sp" />
 
         </androidx.appcompat.widget.Toolbar>
 
@@ -51,43 +60,57 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="12dp"
+            android:paddingStart="16dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="12dp"
             android:clipToPadding="false" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="12dp"
             android:orientation="horizontal"
-            android:padding="12dp"
-            android:background="@android:color/white"
-            android:elevation="8dp">
+            android:gravity="center_vertical"
+            android:padding="6dp"
+            android:background="@drawable/bg_composer"
+            android:elevation="2dp">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fab_voice"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@android:drawable/ic_btn_speak_now"
-                app:backgroundTint="#667eea"
+                android:contentDescription="开始语音输入"
+                app:backgroundTint="@color/accent"
                 app:tint="@android:color/white" />
 
             <EditText
                 android:id="@+id/et_text_input"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_input"
-                android:hint="Type a message..."
-                android:padding="12dp" />
+                android:layout_marginStart="8dp"
+                android:background="@android:color/transparent"
+                android:gravity="center_vertical"
+                android:hint="输入消息"
+                android:maxLines="4"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_muted"
+                android:textSize="15sp" />
 
             <ImageButton
                 android:id="@+id/btn_send"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_send"
+                android:src="@drawable/ic_send"
+                android:contentDescription="发送消息"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:tint="#667eea" />
+                app:tint="@color/primary" />
 
         </LinearLayout>
 
@@ -96,9 +119,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginBottom="100dp"
+            android:layout_marginBottom="16dp"
             android:visibility="gone"
-            app:cardCornerRadius="30dp"
+            app:cardCornerRadius="8dp"
             app:cardElevation="8dp"
             app:cardBackgroundColor="#CC333333">
 
@@ -112,7 +135,7 @@
                 <ProgressBar
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:indeterminateTint="#667eea" />
+                    android:indeterminateTint="@color/accent" />
 
                 <TextView
                     android:id="@+id/tv_recording_hint"
@@ -131,9 +154,11 @@
     <!-- 侧边菜单 -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="match_parent"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        app:itemIconTint="@color/primary"
+        app:itemTextColor="@color/text_primary"
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/menu_activity_main" />
 

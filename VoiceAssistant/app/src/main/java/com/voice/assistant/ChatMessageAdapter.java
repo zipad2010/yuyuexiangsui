@@ -53,7 +53,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
             }
             
             if (createdAt != null && !createdAt.isEmpty()) {
-                // 可选：显示时间
+                // 鍙�夛細鏄剧ず鏃堕棿
             }
             
         } catch (Exception e) {

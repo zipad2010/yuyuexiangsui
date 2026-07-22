@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class ModelSelectActivity extends AppCompatActivity {
         initViews();
         loadModels();
         
-        // ¼ÓÔØÒÑ±£´æµÄÉèÖÃ
+        // åŠ è½½å·²ä¿å­˜çš„è®¾ç½®
         selectedModel = apiClient.getSelectedModel();
         enableThinking = apiClient.isEnableThinking();
         swThinking.setChecked(enableThinking);
@@ -45,7 +46,7 @@ public class ModelSelectActivity extends AppCompatActivity {
         swThinking.setOnCheckedChangeListener((buttonView, isChecked) -> {
             enableThinking = isChecked;
             apiClient.saveSelectedModel(selectedModel, enableThinking);
-            Toast.makeText(this, enableThinking ? "Éî¶ÈË¼¿¼ÒÑ¿ªÆô" : "Éî¶ÈË¼¿¼ÒÑ¹Ø±Õ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, enableThinking ? "æ·±åº¦æ€è€ƒå·²å¼€å¯" : "æ·±åº¦æ€è€ƒå·²å…³é—­", Toast.LENGTH_SHORT).show();
         });
     }
     
@@ -59,7 +60,7 @@ public class ModelSelectActivity extends AppCompatActivity {
             selectedModel = model.id;
             apiClient.saveSelectedModel(selectedModel, enableThinking);
             updateCurrentModelDisplay();
-            Toast.makeText(this, "ÒÑÇĞ»»ÖÁ: " + model.name, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "å·²åˆ‡æ¢è‡³: " + model.name, Toast.LENGTH_SHORT).show();
         });
         
         rvModels.setLayoutManager(new LinearLayoutManager(this));
@@ -74,21 +75,23 @@ public class ModelSelectActivity extends AppCompatActivity {
                 if (json.getInt("code") == 200) {
                     JSONObject data = json.getJSONObject("data");
                     JSONArray modelsArray = data.getJSONArray("models");
+                    List<ModelItem> loadedModels = new ArrayList<>();
+                    for (int i = 0; i < modelsArray.length(); i++) {
+                        JSONObject m = modelsArray.getJSONObject(i);
+                        ModelItem item = new ModelItem();
+                        item.id = m.getString("id");
+                        item.name = m.getString("name");
+                        item.supportsThinking = m.optBoolean("supportsThinking", false);
+                        loadedModels.add(item);
+                    }
                     runOnUiThread(() -> {
                         models.clear();
-                        for (int i = 0; i < modelsArray.length(); i++) {
-                            JSONObject m = modelsArray.getJSONObject(i);
-                            ModelItem item = new ModelItem();
-                            item.id = m.getString("id");
-                            item.name = m.getString("name");
-                            item.supportsThinking = m.optBoolean("supportsThinking", false);
-                            models.add(item);
-                        }
+                        models.addAll(loadedModels);
                         adapter.notifyDataSetChanged();
                     });
                 }
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "¼ÓÔØÄ£ĞÍÊ§°Ü", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(this, "åŠ è½½æ¨¡å‹å¤±è´¥", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
@@ -96,11 +99,11 @@ public class ModelSelectActivity extends AppCompatActivity {
     private void updateCurrentModelDisplay() {
         for (ModelItem item : models) {
             if (item.id.equals(selectedModel)) {
-                tvCurrentModel.setText("µ±Ç°Ä£ĞÍ: " + item.name);
+                tvCurrentModel.setText("å½“å‰æ¨¡å‹: " + item.name);
                 return;
             }
         }
-        tvCurrentModel.setText("µ±Ç°Ä£ĞÍ: " + selectedModel);
+        tvCurrentModel.setText("å½“å‰æ¨¡å‹: " + selectedModel);
     }
     
     static class ModelItem {
