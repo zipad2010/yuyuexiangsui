@@ -19,7 +19,7 @@ app:
   upload:
     root-path: ${UPLOAD_ROOT_PATH:/www/wwwroot/voice-backend/uploads/}
     avatar-path: ${AVATAR_UPLOAD_PATH:/www/wwwroot/voice-backend/uploads/avatars/}
-    avatar-url-base: ${AVATAR_URL_BASE:http://SERVER_ADDRESS_REMOVED:8080/uploads/avatars/}
+    avatar-url-base: ${AVATAR_URL_BASE}
 
 api:
   baidu:

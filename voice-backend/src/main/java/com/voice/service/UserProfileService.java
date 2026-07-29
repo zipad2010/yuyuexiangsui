@@ -25,7 +25,7 @@ public class UserProfileService {
     @Value("${app.upload.avatar-path:/www/wwwroot/voice-backend/uploads/avatars/}")
     private String avatarUploadPath;
 
-    @Value("${app.upload.avatar-url-base:http://SERVER_ADDRESS_REMOVED:8080/uploads/avatars/}")
+    @Value("${app.upload.avatar-url-base}")
     private String avatarUrlBase;
     
     public Map<String, Object> getProfile(Long userId) {

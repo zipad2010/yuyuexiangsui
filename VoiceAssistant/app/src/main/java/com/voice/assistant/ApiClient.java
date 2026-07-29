@@ -12,8 +12,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
-    // 你的服务器IP
-    private static final String BASE_URL = "http://SERVER_ADDRESS_REMOVED:8080/api";
+    private static final String BASE_URL = BuildConfig.API_BASE_URL;
     
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private OkHttpClient client;

@@ -1,0 +1,18 @@
+.vscode/
+
+# Android local configuration and generated files
+VoiceAssistant/local.properties
+VoiceAssistant/.gradle/
+VoiceAssistant/app/.gradle/
+VoiceAssistant/build/
+VoiceAssistant/app/build/
+
+# Maven generated files
+voice-backend/target/
+
+# Signing keys and environment files
+*.jks
+*.keystore
+.env
+.env.*
+application-local.yml
