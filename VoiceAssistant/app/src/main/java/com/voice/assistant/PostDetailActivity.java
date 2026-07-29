@@ -23,9 +23,9 @@ public class PostDetailActivity extends AppCompatActivity {
     private TokenManager tokenManager;
     private List<JSONObject> replies;
     private ReplyAdapter adapter;
-    private Long postId;
+    private long postId;
     
-    public static android.content.Intent newIntent(android.content.Context context, Long postId) {
+    public static android.content.Intent newIntent(android.content.Context context, long postId) {
         android.content.Intent intent = new android.content.Intent(context, PostDetailActivity.class);
         intent.putExtra("postId", postId);
         return intent;
@@ -37,6 +37,11 @@ public class PostDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_detail);
         
         postId = getIntent().getLongExtra("postId", 0);
+        if (postId <= 0) {
+            Toast.makeText(this, "帖子不存在", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         

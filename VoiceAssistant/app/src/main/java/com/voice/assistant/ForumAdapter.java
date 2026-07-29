@@ -15,7 +15,7 @@ public class ForumAdapter extends RecyclerView.Adapter<ForumAdapter.ViewHolder> 
     private OnPostClickListener listener;
     
     public interface OnPostClickListener {
-        void onPostClick(Long postId);
+        void onPostClick(long postId);
     }
     
     public ForumAdapter(List<JSONObject> posts, OnPostClickListener listener) {
@@ -38,12 +38,23 @@ public class ForumAdapter extends RecyclerView.Adapter<ForumAdapter.ViewHolder> 
             holder.tvTitle.setText(post.optString("title", "No Title"));
             holder.tvContent.setText(post.optString("content", ""));
             holder.tvAuthor.setText(post.optString("nickname", post.optString("username", "Unknown")));
-            holder.tvLikes.setText(String.valueOf(post.optInt("likeCount", 0)));
-            holder.tvReplies.setText(String.valueOf(post.optInt("replyCount", 0)));
+            holder.tvLikes.setText("赞 " + post.optInt("likeCount", 0));
+            holder.tvReplies.setText("回复 " + post.optInt("replyCount", 0));
+                holder.itemView.setAlpha(0f);
+                holder.itemView.setTranslationY(18f);
+                holder.itemView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setStartDelay(Math.min(position, 5) * 45L)
+                    .setDuration(260L)
+                    .start();
             
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onPostClick(post.optLong("id"));
+                    long postId = post.optLong("id", 0);
+                    if (postId > 0) {
+                        listener.onPostClick(postId);
+                    }
                 }
             });
         } catch (Exception e) {

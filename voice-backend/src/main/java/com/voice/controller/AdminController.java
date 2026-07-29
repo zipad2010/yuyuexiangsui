@@ -87,9 +87,10 @@ public class AdminController {
             @PathVariable Long userId,
             @RequestParam BigDecimal amount,
             @RequestParam String remark) {
-        
-        balanceService.addBalance(userId, amount);
-        return ApiResponse.success("充值成功");
+
+        int points = amount.setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+        balanceService.addPoints(userId, points);
+        return ApiResponse.success("积分充值成功");
     }
     
     @PutMapping("/users/{userId}/status")

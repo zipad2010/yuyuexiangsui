@@ -36,7 +36,11 @@ public class UserProfileController {
         if (userId == null) {
             return ApiResponse.error(401, "未登录");
         }
-        return ApiResponse.success(userProfileService.getProfile(userId));
+        try {
+            return ApiResponse.success(userProfileService.getProfile(userId));
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(404, e.getMessage());
+        }
     }
     
     @PostMapping("/profile")
@@ -56,10 +60,14 @@ public class UserProfileController {
             gender = Integer.parseInt(requestBody.get("gender"));
         }
         
-        userProfileService.updateProfile(userId, nickname, signature, gender);
-        Map<String, String> result = new HashMap<>();
-        result.put("message", "更新成功");
-        return ApiResponse.success(result);
+        try {
+            userProfileService.updateProfile(userId, nickname, signature, gender);
+            Map<String, String> result = new HashMap<>();
+            result.put("message", "更新成功");
+            return ApiResponse.success(result);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(400, e.getMessage());
+        }
     }
     
     @PostMapping("/avatar")
@@ -72,9 +80,15 @@ public class UserProfileController {
             return ApiResponse.error(401, "未登录");
         }
         
-        String avatarUrl = userProfileService.uploadAvatar(userId, file);
-        Map<String, String> result = new HashMap<>();
-        result.put("avatarUrl", avatarUrl);
-        return ApiResponse.success(result);
+        try {
+            String avatarUrl = userProfileService.uploadAvatar(userId, file);
+            Map<String, String> result = new HashMap<>();
+            result.put("avatarUrl", avatarUrl);
+            return ApiResponse.success(result);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.error(500, e.getMessage());
+        }
     }
 }

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     // 你的服务器IP
-    private static final String BASE_URL = "http://45.207.199.36:8080/api";
+    private static final String BASE_URL = "http://SERVER_ADDRESS_REMOVED:8080/api";
     
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private OkHttpClient client;
@@ -103,6 +103,18 @@ public class ApiClient {
             return response.body().string();
         }
     }
+
+    public String getChatHistory(String token) throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/voice/chat/history")
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
     
     public String textChat(String message, String token) throws IOException, JSONException {
         return textChat(message, token, null, false, null);
@@ -156,6 +168,24 @@ public class ApiClient {
                 .post(RequestBody.create(body.toString(), JSON))
                 .build();
         
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    public String uploadAvatar(byte[] imageData, String fileName, String mimeType, String token) throws IOException {
+        RequestBody imageBody = RequestBody.create(imageData, MediaType.parse(mimeType));
+        MultipartBody body = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("avatar", fileName, imageBody)
+                .build();
+
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/user/avatar")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+
         try (Response response = client.newCall(request).execute()) {
             return response.body().string();
         }
@@ -233,7 +263,7 @@ public class ApiClient {
         }
     }
     
-    public String getConversation(Long targetUserId, String token) throws IOException {
+    public String getConversation(long targetUserId, String token) throws IOException {
         Request request = new Request.Builder()
                 .url(BASE_URL + "/messages/conversation/" + targetUserId)
                 .addHeader("Authorization", "Bearer " + token)
@@ -244,8 +274,23 @@ public class ApiClient {
             return response.body().string();
         }
     }
+
+    public String findMessageRecipient(String username, String token) throws IOException {
+        HttpUrl url = HttpUrl.parse(BASE_URL + "/messages/recipient").newBuilder()
+                .addQueryParameter("username", username)
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
     
-    public String sendMessage(Long toUserId, String content, String token) throws IOException, JSONException {
+    public String sendMessage(long toUserId, String content, String token) throws IOException, JSONException {
         JSONObject body = new JSONObject();
         body.put("toUserId", toUserId);
         body.put("content", content);
@@ -311,7 +356,15 @@ public class ApiClient {
      */
     public String getSelectedModel() {
         SharedPreferences prefs = context.getSharedPreferences("voice_prefs", Context.MODE_PRIVATE);
-        return prefs.getString("selected_model", "deepseek-chat");
+        String selectedModel = prefs.getString("selected_model", "deepseek-v4-pro");
+        if ("deepseek-chat".equals(selectedModel) || "deepseek-reasoner".equals(selectedModel)) {
+            selectedModel = "deepseek-v4-pro";
+            prefs.edit()
+                    .putString("selected_model", selectedModel)
+                    .putBoolean("enable_thinking", false)
+                    .apply();
+        }
+        return selectedModel;
     }
     
     /**

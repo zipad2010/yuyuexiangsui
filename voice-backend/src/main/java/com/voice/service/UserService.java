@@ -13,6 +13,9 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BalanceService balanceService;
     
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -24,7 +27,9 @@ public class UserService {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setBalance(new BigDecimal("10.00"));
+        user.setBalance(BigDecimal.ZERO);
+        user.setPoints(50);
+        user.setPointsMigrated(true);
         return userRepository.save(user);
     }
     
@@ -33,6 +38,8 @@ public class UserService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (passwordEncoder.matches(password, user.getPassword())) {
+                balanceService.migratePoints(user);
+                userRepository.save(user);
                 return user;
             }
         }
@@ -43,8 +50,7 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
     
-    public BigDecimal getBalance(Long userId) {
-        User user = findById(userId);
-        return user != null ? user.getBalance() : BigDecimal.ZERO;
+    public int getPoints(Long userId) {
+        return balanceService.getPoints(userId);
     }
 }

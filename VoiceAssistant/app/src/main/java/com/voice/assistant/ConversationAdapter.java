@@ -21,7 +21,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd", Locale.getDefault());
     
     public interface OnConversationClickListener {
-        void onConversationClick(Long userId);
+        void onConversationClick(long userId, String username);
     }
     
     public ConversationAdapter(List<JSONObject> conversations, OnConversationClickListener listener) {
@@ -44,10 +44,18 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             String username = conv.optString("nickname", conv.optString("username", "Unknown"));
             String lastMessage = conv.optString("lastMessage", "");
             String avatarUrl = conv.optString("avatarUrl");
-            Long userId = conv.optLong("userId");
+            long userId = conv.optLong("userId");
             
             holder.tvName.setText(username);
             holder.tvLastMessage.setText(lastMessage);
+                holder.itemView.setAlpha(0f);
+                holder.itemView.setTranslationY(16f);
+                holder.itemView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setStartDelay(Math.min(position, 5) * 45L)
+                    .setDuration(250L)
+                    .start();
             
             String createdAt = conv.optString("lastMessageTime");
             if (createdAt != null && !createdAt.isEmpty()) {
@@ -62,7 +70,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onConversationClick(userId);
+                    listener.onConversationClick(userId, username);
                 }
             });
         } catch (Exception e) {

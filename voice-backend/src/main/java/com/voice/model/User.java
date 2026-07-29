@@ -19,8 +19,22 @@ public class User {
 
     private String email;
 
+    @Column(length = 64)
+    private String nickname;
+
+    @Column(length = 255)
+    private String signature;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(precision = 10, scale = 4)
     private BigDecimal balance = BigDecimal.ZERO;
+
+    private Integer points;
+
+    @Column(name = "points_migrated")
+    private Boolean pointsMigrated = false;
 
     @Column(name = "total_usage", precision = 10, scale = 4)
     private BigDecimal totalUsage = BigDecimal.ZERO;
@@ -70,12 +84,52 @@ public class User {
         this.email = email;
     }
 
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public BigDecimal getBalance() {
         return balance;
     }
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public Boolean getPointsMigrated() {
+        return pointsMigrated;
+    }
+
+    public void setPointsMigrated(Boolean pointsMigrated) {
+        this.pointsMigrated = pointsMigrated;
     }
 
     public BigDecimal getTotalUsage() {

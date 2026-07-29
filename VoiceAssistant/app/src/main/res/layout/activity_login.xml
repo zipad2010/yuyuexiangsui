@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/login_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
     android:paddingStart="28dp"
     android:paddingEnd="28dp"
-    android:background="@color/background">
+    android:background="@drawable/bg_login_page">
 
     <TextView
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="@drawable/bg_login_mark"
         android:gravity="center"
-        android:text="声"
+        android:text="月"
         android:textColor="@color/primary"
         android:textSize="28sp"
         android:textStyle="bold" />
@@ -22,7 +23,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="AI语音助手"
+        android:text="@string/app_name"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@color/text_primary"
@@ -33,52 +34,45 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="36dp"
-        android:text="用声音和文字，随时开始对话"
+        android:text="听你所想，伴你所行"
         android:textColor="@color/text_secondary"
         android:textSize="14sp" />
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/AppTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        app:boxBackgroundColor="@color/surface"
-        app:boxCornerRadiusBottomEnd="8dp"
-        app:boxCornerRadiusBottomStart="8dp"
-        app:boxCornerRadiusTopEnd="8dp"
-        app:boxCornerRadiusTopStart="8dp"
-        app:boxStrokeColor="@color/primary"
-        app:hintTextColor="@color/text_secondary"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        android:elevation="1dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_username"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:hint="用户名"
-            android:inputType="text" />
+            android:inputType="text"
+            android:textColor="@color/black"
+            android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/AppTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
-        app:boxBackgroundColor="@color/surface"
-        app:boxCornerRadiusBottomEnd="8dp"
-        app:boxCornerRadiusBottomStart="8dp"
-        app:boxCornerRadiusTopEnd="8dp"
-        app:boxCornerRadiusTopStart="8dp"
-        app:boxStrokeColor="@color/primary"
+        android:elevation="1dp"
         app:endIconMode="password_toggle"
-        app:hintTextColor="@color/text_secondary"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        app:endIconTint="@color/primary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:hint="密码"
-            android:inputType="textPassword" />
+            android:inputType="textPassword"
+            android:textColor="@color/black"
+            android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

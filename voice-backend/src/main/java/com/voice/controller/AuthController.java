@@ -29,8 +29,9 @@ public class AuthController {
             
             Map<String, String> result = new HashMap<>();
             result.put("token", token);
+            result.put("userId", user.getId().toString());
             result.put("username", user.getUsername());
-            result.put("balance", user.getBalance().toString());
+            result.put("balance", user.getPoints().toString());
             
             return ApiResponse.success(result);
         } catch (Exception e) {
@@ -49,8 +50,9 @@ public class AuthController {
         
         Map<String, String> result = new HashMap<>();
         result.put("token", token);
+        result.put("userId", user.getId().toString());
         result.put("username", user.getUsername());
-        result.put("balance", user.getBalance().toString());
+        result.put("balance", user.getPoints().toString());
         
         return ApiResponse.success(result);
     }

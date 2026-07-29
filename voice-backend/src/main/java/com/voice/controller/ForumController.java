@@ -33,7 +33,7 @@ public class ForumController {
     }
     
     @GetMapping("/posts")
-    public ApiResponse<List<ForumPost>> getPosts(
+    public ApiResponse<List<Map<String, Object>>> getPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ApiResponse.success(forumService.getPosts(page, size));
@@ -42,7 +42,7 @@ public class ForumController {
     @GetMapping("/post/{postId}")
     public ApiResponse<Map<String, Object>> getPostDetail(@PathVariable Long postId) {
         Map<String, Object> result = new HashMap<>();
-        result.put("post", forumService.getPost(postId));
+        result.put("post", forumService.toPostView(forumService.getPost(postId)));
         result.put("replies", forumService.getReplies(postId));
         return ApiResponse.success(result);
     }

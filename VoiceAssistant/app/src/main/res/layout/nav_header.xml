@@ -7,7 +7,7 @@
     android:paddingTop="28dp"
     android:paddingEnd="20dp"
     android:paddingBottom="22dp"
-    android:background="@color/primary">
+    android:background="@drawable/bg_drawer_header">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_avatar"
@@ -29,8 +29,18 @@
         android:id="@+id/tv_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@android:color/white"
-        android:textSize="14sp" />
+        android:text="@账号"
+        android:textColor="#D9FFFFFF"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tv_signature"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:maxLines="2"
+        android:text="让每次对话都有温度"
+        android:textColor="#BFFFFFFF"
+        android:textSize="12sp" />
 
 </LinearLayout>

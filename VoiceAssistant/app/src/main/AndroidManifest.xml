@@ -8,18 +8,20 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="AI语音助手"
+        android:label="@string/app_name"
         android:theme="@style/Theme.VoiceAssistant"
         android:usesCleartextTraffic="true">
         
         <activity
-            android:name=".LoginActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".LoginActivity" />
         
         <activity android:name=".MainActivity" />
         

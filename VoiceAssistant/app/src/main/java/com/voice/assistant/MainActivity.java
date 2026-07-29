@@ -1,46 +1,54 @@
 package com.voice.assistant;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.view.Gravity;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.navigation.NavigationView;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.hdodenhof.circleimageview.CircleImageView;
-
 public class MainActivity extends AppCompatActivity {
+
+    private static final String UI_PREFS_NAME = "ui_preferences";
+    private static final String KEY_BACKGROUND_URI = "custom_background_uri";
     
     private RecyclerView rvMessages;
     private FloatingActionButton fabVoice;
@@ -48,9 +56,11 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnSend;
     private CardView cardRecording;
     private TextView tvRecordingHint, tvBalance, tvTitle;
-    private DrawerLayout drawerLayout;
-    private NavigationView navigationView;
-    private ImageButton btnMenu;
+    private ImageView ivCustomBackground;
+    private View toolbar, composer, chatContent;
+    private ClockRadialMenuView clockMenu;
+    private AnimatorSet recordingPulse;
+    private ActivityResultLauncher<String[]> backgroundPicker;
     
     private List<Message> messages;
     private ChatAdapter adapter;
@@ -76,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         audioPlayer = new AudioPlayer(this);
+        backgroundPicker = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(), this::setCustomBackground);
         
         if (!tokenManager.isLoggedIn()) {
             startLoginActivity();
@@ -87,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         loadBalance();
         loadUserInfo();      // 加载用户信息（赞助者状态）
         loadUserProfile();   // 加载用户头像和昵称
-        addWelcomeMessage();
+        loadChatHistory();
         checkPermission();
     }
     
@@ -108,9 +120,11 @@ public class MainActivity extends AppCompatActivity {
         tvRecordingHint = findViewById(R.id.tv_recording_hint);
         tvBalance = findViewById(R.id.tv_balance);
         tvTitle = findViewById(R.id.tv_title);
-        drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
-        btnMenu = findViewById(R.id.btn_menu);
+        toolbar = findViewById(R.id.toolbar);
+        composer = findViewById(R.id.composer);
+        chatContent = findViewById(R.id.chat_content);
+        clockMenu = findViewById(R.id.clock_menu);
+        ivCustomBackground = findViewById(R.id.iv_custom_background);
         
         messages = new ArrayList<>();
         adapter = new ChatAdapter(messages, position -> {
@@ -123,38 +137,26 @@ public class MainActivity extends AppCompatActivity {
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
         rvMessages.setAdapter(adapter);
         
-        tvBalance.setText("Balance: ¥" + tokenManager.getBalance());
+        tvBalance.setText("积分 " + tokenManager.getBalance());
         if (tvTitle != null) {
-            tvTitle.setText("AI Voice Assistant");
+            tvTitle.setText(R.string.app_name);
         }
+
+        showLocalAccountInfo();
+        restoreCustomBackground();
+
+        playEntranceAnimation();
         
-        // 设置侧边栏菜单点击事件
-        navigationView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_profile) {
-                startActivity(new Intent(this, ProfileActivity.class));
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_forum) {
-                startActivity(new Intent(this, ForumActivity.class));
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_messages) {
-                startActivity(new Intent(this, MessagesActivity.class));
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_model) {
-                startActivity(new Intent(this, ModelSelectActivity.class));
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_balance) {
-                Toast.makeText(this, "Balance: ¥" + tokenManager.getBalance(), Toast.LENGTH_SHORT).show();
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else if (id == R.id.nav_logout) {
-                tokenManager.clear();
-                startLoginActivity();
-                finish();
-                drawerLayout.closeDrawer(GravityCompat.START);
+        clockMenu.setListener(new ClockRadialMenuView.Listener() {
+            @Override
+            public void onMenuAction(int itemId) {
+                handleMenuAction(itemId);
             }
-            return true;
+
+            @Override
+            public void onMenuStateChanged(boolean open) {
+                setChatBlurred(open);
+            }
         });
     }
     
@@ -170,11 +172,7 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject data = json.getJSONObject("data");
                     isSponsor = data.optBoolean("isSponsor", false);
                     runOnUiThread(() -> {
-                        // 根据赞助者状态显示/隐藏模型切换菜单
-                        MenuItem modelItem = navigationView.getMenu().findItem(R.id.nav_model);
-                        if (modelItem != null) {
-                            modelItem.setVisible(isSponsor);
-                        }
+                        clockMenu.setSponsorVisible(isSponsor);
                     });
                 }
             } catch (Exception e) {
@@ -191,25 +189,75 @@ public class MainActivity extends AppCompatActivity {
                 if (json.getInt("code") == 200) {
                     JSONObject data = json.getJSONObject("data");
                     String nickname = data.optString("nickname", tokenManager.getUsername());
+                    String signature = data.optString("signature", "让每次对话都有温度");
                     String avatarUrl = data.optString("avatarUrl", null);
                     runOnUiThread(() -> {
-                        View headerView = navigationView.getHeaderView(0);
-                        TextView tvNickname = headerView.findViewById(R.id.tv_nickname);
-                        TextView tvUsername = headerView.findViewById(R.id.tv_username);
-                        CircleImageView ivAvatar = headerView.findViewById(R.id.iv_avatar);
-                        
-                        tvNickname.setText(nickname);
-                        tvUsername.setText("@" + tokenManager.getUsername());
-                        
-                        if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                            Glide.with(this).load(avatarUrl).into(ivAvatar);
-                        }
+                        clockMenu.setAccount(nickname, tokenManager.getUsername(),
+                                signature.isEmpty() ? "让每次对话都有温度" : signature);
                     });
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                runOnUiThread(this::showLocalAccountInfo);
             }
         }).start();
+    }
+
+    private void showLocalAccountInfo() {
+        if (clockMenu == null) {
+            return;
+        }
+        clockMenu.setAccount(tokenManager.getUsername(), tokenManager.getUsername(), "让每次对话都有温度");
+    }
+
+    private void setCustomBackground(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_BACKGROUND_URI, uri.toString())
+                    .apply();
+            displayCustomBackground(uri);
+            Toast.makeText(this, "聊天背景已更新", Toast.LENGTH_SHORT).show();
+        } catch (SecurityException e) {
+            Toast.makeText(this, "无法长期读取所选图片，请重新选择", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void restoreCustomBackground() {
+        SharedPreferences preferences = getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE);
+        String uriValue = preferences.getString(KEY_BACKGROUND_URI, null);
+        if (uriValue != null) {
+            displayCustomBackground(Uri.parse(uriValue));
+        }
+    }
+
+    private void displayCustomBackground(Uri uri) {
+        ivCustomBackground.setVisibility(View.VISIBLE);
+        Glide.with(this).load(uri).centerCrop().into(ivCustomBackground);
+    }
+
+    private void clearCustomBackground() {
+        getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
+                .edit()
+                .remove(KEY_BACKGROUND_URI)
+                .apply();
+        Glide.with(this).clear(ivCustomBackground);
+        ivCustomBackground.setImageDrawable(null);
+        ivCustomBackground.setVisibility(View.GONE);
+        Toast.makeText(this, "已恢复默认背景", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (clockMenu != null && tokenManager != null && tokenManager.isLoggedIn()) {
+            showLocalAccountInfo();
+            loadUserProfile();
+        }
     }
     
     private void setupListeners() {
@@ -230,7 +278,84 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         
-        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+    }
+
+    private void handleMenuAction(int id) {
+        if (id == R.id.nav_home) {
+            return;
+        } else if (id == R.id.nav_profile) {
+            startActivity(new Intent(this, ProfileActivity.class));
+        } else if (id == R.id.nav_forum) {
+            startActivity(new Intent(this, ForumActivity.class));
+        } else if (id == R.id.nav_messages) {
+            startActivity(new Intent(this, MessagesActivity.class));
+        } else if (id == R.id.nav_model) {
+            startActivity(new Intent(this, ModelSelectActivity.class));
+        } else if (id == R.id.nav_balance) {
+            Toast.makeText(this, "当前积分 " + tokenManager.getBalance(), Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_background) {
+            backgroundPicker.launch(new String[]{"image/*"});
+        } else if (id == R.id.nav_reset_background) {
+            clearCustomBackground();
+        } else if (id == R.id.nav_logout) {
+            tokenManager.clear();
+            startLoginActivity();
+            finish();
+        }
+    }
+
+    private void setChatBlurred(boolean blurred) {
+        chatContent.animate()
+                .alpha(blurred ? 0.72f : 1f)
+                .scaleX(blurred ? 0.985f : 1f)
+                .scaleY(blurred ? 0.985f : 1f)
+                .setDuration(blurred ? 420L : 300L)
+                .start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            chatContent.setRenderEffect(blurred
+                    ? RenderEffect.createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
+                    : null);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (clockMenu != null && clockMenu.isOpen()) {
+            clockMenu.close();
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    private void playEntranceAnimation() {
+        toolbar.setAlpha(0f);
+        toolbar.setTranslationY(-20f);
+        toolbar.animate().alpha(1f).translationY(0f).setDuration(320L).start();
+
+        rvMessages.setAlpha(0f);
+        rvMessages.animate().alpha(1f).setStartDelay(100L).setDuration(420L).start();
+
+        composer.setAlpha(0f);
+        composer.setTranslationY(32f);
+        composer.animate().alpha(1f).translationY(0f).setStartDelay(180L).setDuration(360L).start();
+    }
+
+    private void startRecordingPulse() {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(fabVoice, View.SCALE_X, 1f, 1.12f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(fabVoice, View.SCALE_Y, 1f, 1.12f, 1f);
+        scaleX.setRepeatCount(ValueAnimator.INFINITE);
+        scaleY.setRepeatCount(ValueAnimator.INFINITE);
+        recordingPulse = new AnimatorSet();
+        recordingPulse.setDuration(900L);
+        recordingPulse.playTogether(scaleX, scaleY);
+        recordingPulse.start();
+    }
+
+    private void stopRecordingPulse() {
+        if (recordingPulse != null) {
+            recordingPulse.cancel();
+        }
+        fabVoice.animate().scaleX(1f).scaleY(1f).setDuration(160L).start();
     }
     
     private void loadBalance() {
@@ -241,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
                 if (json.getInt("code") == 200) {
                     String balance = json.getString("data");
                     runOnUiThread(() -> {
-                        tvBalance.setText("Balance: ¥" + balance);
+                        tvBalance.setText("积分 " + balance);
                         tokenManager.updateBalance(balance);
                     });
                 }
@@ -250,13 +375,73 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    private void loadChatHistory() {
+        setChatInputEnabled(false);
+        new Thread(() -> {
+            try {
+                JSONObject json = new JSONObject(apiClient.getChatHistory(tokenManager.getToken()));
+                JSONArray data = json.optJSONArray("data");
+                List<Message> historyMessages = new ArrayList<>();
+                if (json.optInt("code") == 200 && data != null) {
+                    for (int index = 0; index < data.length(); index++) {
+                        JSONObject item = data.optJSONObject(index);
+                        if (item == null) {
+                            continue;
+                        }
+                        String content = item.optString("content", "").trim();
+                        if (!content.isEmpty()) {
+                            historyMessages.add(new Message(content, "user".equals(item.optString("role"))));
+                        }
+                    }
+                }
+                runOnUiThread(() -> {
+                    messages.clear();
+                    messages.addAll(historyMessages);
+                    if (messages.isEmpty()) {
+                        addWelcomeMessage();
+                    } else {
+                        adapter.notifyDataSetChanged();
+                        rvMessages.scrollToPosition(messages.size() - 1);
+                    }
+                    setChatInputEnabled(true);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    if (messages.isEmpty()) {
+                        addWelcomeMessage();
+                    }
+                    setChatInputEnabled(true);
+                    Toast.makeText(this, "历史对话加载失败", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
+    private void setChatInputEnabled(boolean enabled) {
+        etTextInput.setEnabled(enabled);
+        btnSend.setEnabled(enabled);
+        fabVoice.setEnabled(enabled);
+        composer.animate().alpha(enabled ? 1f : 0.55f).setDuration(180L).start();
+    }
     
     private void startRecording() {
         if (isRecording) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            checkPermission();
+            Toast.makeText(this, "请先允许麦克风权限", Toast.LENGTH_SHORT).show();
+            return;
+        }
         
         isRecording = true;
         cardRecording.setVisibility(View.VISIBLE);
-        tvRecordingHint.setText("Recording...");
+        cardRecording.setAlpha(0f);
+        cardRecording.setScaleX(0.92f);
+        cardRecording.setScaleY(0.92f);
+        cardRecording.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220L).start();
+        tvRecordingHint.setText("正在聆听...");
+        startRecordingPulse();
         
         new Thread(() -> {
             int bufferSize = AudioRecord.getMinBufferSize(16000,
@@ -285,6 +470,7 @@ public class MainActivity extends AppCompatActivity {
             
             runOnUiThread(() -> {
                 cardRecording.setVisibility(View.GONE);
+                stopRecordingPulse();
                 sendVoiceToServer(audioData);
             });
         }).start();
@@ -292,6 +478,7 @@ public class MainActivity extends AppCompatActivity {
     
     private void stopRecording() {
         isRecording = false;
+        stopRecordingPulse();
     }
     
     /**
@@ -306,14 +493,8 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 String response;
-                if (isSponsor && !selectedModel.equals("deepseek-chat")) {
-                    // 赞助者使用选择的模型
-                    response = apiClient.voiceChat(audioData, tokenManager.getToken(), 
-                                                    selectedModel, enableThinking, null);
-                } else {
-                    // 普通用户使用默认模型
-                    response = apiClient.voiceChat(audioData, tokenManager.getToken());
-                }
+                response = apiClient.voiceChat(audioData, tokenManager.getToken(),
+                                                selectedModel, enableThinking, null);
                 JSONObject json = new JSONObject(response);
                 
                 runOnUiThread(() -> {
@@ -327,18 +508,12 @@ public class MainActivity extends AppCompatActivity {
                             String audioBase64 = data.getString("audioBase64");
                             String balance = data.getString("balance");
                             
-                            tvBalance.setText("Balance: ¥" + balance);
+                            tvBalance.setText("积分 " + balance);
                             tokenManager.updateBalance(balance);
                             
                             addUserMessage(recognizedText);
                             
-                            Message aiMsg = new Message(aiReply, false);
-                            aiMsg.setAudioBase64(audioBase64);
-                            messages.add(aiMsg);
-                            adapter.notifyItemInserted(messages.size() - 1);
-                            rvMessages.scrollToPosition(messages.size() - 1);
-                            
-                            audioPlayer.playBase64Audio(audioBase64, null);
+                            showStreamingAiMessage(aiReply, audioBase64);
                             
                         } else {
                             Toast.makeText(MainActivity.this, json.getString("message"), Toast.LENGTH_SHORT).show();
@@ -368,14 +543,8 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 String response;
-                if (isSponsor && !selectedModel.equals("deepseek-chat")) {
-                    // 赞助者使用选择的模型
-                    response = apiClient.textChat(text, tokenManager.getToken(),
-                                                   selectedModel, enableThinking, null);
-                } else {
-                    // 普通用户使用默认模型
-                    response = apiClient.textChat(text, tokenManager.getToken());
-                }
+                response = apiClient.textChat(text, tokenManager.getToken(),
+                                               selectedModel, enableThinking, null);
                 JSONObject json = new JSONObject(response);
                 
                 runOnUiThread(() -> {
@@ -388,16 +557,10 @@ public class MainActivity extends AppCompatActivity {
                             String audioBase64 = data.getString("audioBase64");
                             String balance = data.getString("balance");
                             
-                            tvBalance.setText("Balance: ¥" + balance);
+                            tvBalance.setText("积分 " + balance);
                             tokenManager.updateBalance(balance);
                             
-                            Message aiMsg = new Message(aiReply, false);
-                            aiMsg.setAudioBase64(audioBase64);
-                            messages.add(aiMsg);
-                            adapter.notifyItemInserted(messages.size() - 1);
-                            rvMessages.scrollToPosition(messages.size() - 1);
-                            
-                            audioPlayer.playBase64Audio(audioBase64, null);
+                            showStreamingAiMessage(aiReply, audioBase64);
                             
                         } else {
                             Toast.makeText(MainActivity.this, json.getString("message"), Toast.LENGTH_SHORT).show();
@@ -421,22 +584,54 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyItemInserted(messages.size() - 1);
         rvMessages.scrollToPosition(messages.size() - 1);
     }
+
+    private void showStreamingAiMessage(String content, String audioBase64) {
+        Message message = new Message("", false);
+        message.setAudioBase64(audioBase64);
+        messages.add(message);
+        adapter.notifyItemInserted(messages.size() - 1);
+        rvMessages.scrollToPosition(messages.size() - 1);
+
+        final int chunkSize = content.length() > 180 ? 3 : 2;
+        Runnable streamTask = new Runnable() {
+            private int displayedLength = 0;
+
+            @Override
+            public void run() {
+                if (isFinishing() || isDestroyed() || !messages.contains(message)) {
+                    return;
+                }
+                displayedLength = Math.min(displayedLength + chunkSize, content.length());
+                message.setContent(content.substring(0, displayedLength));
+                int position = messages.indexOf(message);
+                adapter.notifyItemChanged(position);
+                rvMessages.scrollToPosition(position);
+
+                if (displayedLength < content.length()) {
+                    mainHandler.postDelayed(this, 24L);
+                } else if (audioBase64 != null && !audioBase64.isEmpty()) {
+                    audioPlayer.playBase64Audio(audioBase64, null);
+                }
+            }
+        };
+        mainHandler.post(streamTask);
+    }
     
     private void addWelcomeMessage() {
-        String welcome = "Hello! I am AI Voice Assistant 🤗\n\nClick microphone to speak, or type a message below.";
+        String welcome = getString(R.string.welcome_message);
         Message msg = new Message(welcome, false);
         messages.add(msg);
         adapter.notifyItemInserted(0);
     }
     
     private void addLoadingMessage() {
-        Message loading = new Message("Thinking...", false);
+        Message loading = new Message(getString(R.string.thinking), false);
         messages.add(loading);
         adapter.notifyItemInserted(messages.size() - 1);
     }
     
     private void removeLoadingMessage() {
-        if (messages.size() > 0 && messages.get(messages.size() - 1).getContent().equals("Thinking...")) {
+        if (messages.size() > 0 && messages.get(messages.size() - 1).getContent().equals(getString(R.string.thinking))) {
             messages.remove(messages.size() - 1);
             adapter.notifyItemRemoved(messages.size());
         }
@@ -451,6 +646,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mainHandler != null) mainHandler.removeCallbacksAndMessages(null);
         if (audioPlayer != null) audioPlayer.shutdown();
     }
 }

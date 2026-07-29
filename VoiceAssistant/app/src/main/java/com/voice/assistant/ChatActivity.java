@@ -27,14 +27,15 @@ public class ChatActivity extends AppCompatActivity {
     private TokenManager tokenManager;
     private List<JSONObject> messages;
     private ChatMessageAdapter adapter;
-    private Long targetUserId;
+    private long targetUserId;
     private String targetUsername;
     private Handler handler;
     private Runnable refreshRunnable;
     
-    public static android.content.Intent newIntent(android.content.Context context, Long userId) {
+    public static android.content.Intent newIntent(android.content.Context context, long userId, String username) {
         android.content.Intent intent = new android.content.Intent(context, ChatActivity.class);
         intent.putExtra("targetUserId", userId);
+        intent.putExtra("targetUsername", username);
         return intent;
     }
     
@@ -44,6 +45,12 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         
         targetUserId = getIntent().getLongExtra("targetUserId", 0);
+        targetUsername = getIntent().getStringExtra("targetUsername");
+        if (targetUserId <= 0) {
+            Toast.makeText(this, "无效的聊天对象", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         handler = new Handler(Looper.getMainLooper());
@@ -66,16 +73,12 @@ public class ChatActivity extends AppCompatActivity {
         rvMessages = findViewById(R.id.rv_messages);
         etMessage = findViewById(R.id.et_message);
         btnSend = findViewById(R.id.btn_send_message);
+        tvTitle.setText(targetUsername == null || targetUsername.isEmpty() ? "私信" : targetUsername);
         
         messages = new ArrayList<>();
-        adapter = new ChatMessageAdapter(messages, getCurrentUserId());
+        adapter = new ChatMessageAdapter(messages, tokenManager.getUserId());
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
         rvMessages.setAdapter(adapter);
-    }
-    
-    private long getCurrentUserId() {
-        // 从 tokenManager 获取当前用户ID
-        return 1; // 临时返回，实际需要实现
     }
     
     private void loadConversation() {

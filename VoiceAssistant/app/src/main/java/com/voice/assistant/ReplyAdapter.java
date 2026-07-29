@@ -27,7 +27,7 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ViewHolder> 
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_reply, parent, false);
+            .inflate(R.layout.item_reply_v2, parent, false);
         return new ViewHolder(view);
     }
     

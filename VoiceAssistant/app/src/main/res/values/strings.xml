@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AI语音助手</string>
+    <string name="app_name">如月相随</string>
+    <string name="welcome_message">你好，我是如月相随。\n\n可以按住心意说话，也可以在下方写下想说的内容。</string>
+    <string name="thinking">正在思考...</string>
+    <string name="disclaimer_title">使用须知与免责声明</string>
+    <string name="disclaimer_message">1. 本应用提供的 AI 回复仅供交流与参考，不构成医疗、法律、金融或其他专业建议。\n\n2. 为实现语音识别和智能对话，你提交的语音、文字及必要的账号信息会发送至应用后端及相关 AI 服务处理。请勿发送密码、证件号码等敏感信息。\n\n3. AI 生成内容可能存在错误或不适当信息，请自行判断并核实。使用者应遵守法律法规，不得利用本应用生成或传播违法、有害内容。\n\n4. 使用者应对使用本应用及其生成内容的行为和后果自行负责。在适用法律允许的最大范围内，因使用或无法使用本应用而产生的直接或间接损失，以及由此引发的法律、经济、行政、赔偿等责任，本软件及其开发者不承担责任。\n\n点击“同意并继续”即表示你已阅读并接受以上内容。</string>
+    <string name="disclaimer_accept">同意并继续</string>
+    <string name="disclaimer_decline">不同意并退出</string>
 </resources>

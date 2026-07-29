@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -49,6 +50,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         
         initViews();
+        playEntranceAnimation();
         
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -84,6 +86,21 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void playEntranceAnimation() {
+        ViewGroup content = findViewById(R.id.login_content);
+        for (int index = 0; index < content.getChildCount(); index++) {
+            View child = content.getChildAt(index);
+            child.setAlpha(0f);
+            child.setTranslationY(24f);
+            child.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setStartDelay(index * 55L)
+                    .setDuration(360L)
+                    .start();
+        }
+    }
     
     private void doLogin() {
         String username = etUsername.getText().toString().trim();
@@ -105,22 +122,25 @@ public class LoginActivity extends AppCompatActivity {
                 String token = null;
                 String returnedUsername = null;
                 String balance = null;
+                long userId = 0;
                 if (code == 200) {
                     JSONObject data = json.getJSONObject("data");
                     token = data.optString("token", null);
                     returnedUsername = data.optString("username", null);
                     balance = data.optString("balance", null);
+                    userId = data.optLong("userId", 0);
                 }
                 final int finalCode = code;
                 final String finalMessage = message;
                 final String finalToken = token;
                 final String finalReturnedUsername = returnedUsername;
                 final String finalBalance = balance;
+                final long finalUserId = userId;
 
                 mainHandler.post(() -> {
                     setLoading(false);
-                    if (finalCode == 200 && finalToken != null && finalReturnedUsername != null) {
-                        tokenManager.saveToken(finalToken, finalReturnedUsername, finalBalance);
+                    if (finalCode == 200 && finalToken != null && finalReturnedUsername != null && finalUserId > 0) {
+                        tokenManager.saveToken(finalToken, finalReturnedUsername, finalBalance, finalUserId);
                         Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
                         startMainActivity();
                     } else {

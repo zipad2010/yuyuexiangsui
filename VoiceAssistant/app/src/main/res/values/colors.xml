@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#176B5B</color>
-    <color name="primary_dark">#0F4F44</color>
-    <color name="primary_soft">#DDEFEA</color>
-    <color name="accent">#E66A4E</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="background">#F7F8F5</color>
-    <color name="text_primary">#18211F</color>
-    <color name="text_secondary">#66716E</color>
-    <color name="text_muted">#929B98</color>
-    <color name="outline">#DDE3E0</color>
-    <color name="purple_500">#176B5B</color>
-    <color name="purple_700">#0F4F44</color>
+    <color name="primary">#C82F48</color>
+    <color name="primary_dark">#761F36</color>
+    <color name="primary_soft">#F9E8EC</color>
+    <color name="accent">#E65D69</color>
+    <color name="surface">#D9FFFFFF</color>
+    <color name="surface_strong">#F2FFFFFF</color>
+    <color name="background">#F4F8F8</color>
+    <color name="text_primary">#211E23</color>
+    <color name="text_secondary">#625F68</color>
+    <color name="text_muted">#8B8791</color>
+    <color name="outline">#66FFFFFF</color>
+    <color name="glass_stroke">#A6FFFFFF</color>
+    <color name="purple_500">#D73545</color>
+    <color name="purple_700">#A91F31</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 </resources>

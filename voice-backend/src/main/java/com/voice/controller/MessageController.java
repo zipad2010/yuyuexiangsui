@@ -31,7 +31,7 @@ public class MessageController {
     }
     
     @GetMapping("/conversations")
-    public ApiResponse<List<PrivateMessage>> getConversations(HttpServletRequest request) {
+    public ApiResponse<List<Map<String, Object>>> getConversations(HttpServletRequest request) {
         Long userId = getUserIdFromToken(request);
         if (userId == null) {
             return ApiResponse.error(401, "未登录");
@@ -40,7 +40,7 @@ public class MessageController {
     }
     
     @GetMapping("/conversation/{targetUserId}")
-    public ApiResponse<List<PrivateMessage>> getConversation(
+    public ApiResponse<List<Map<String, Object>>> getConversation(
             @PathVariable Long targetUserId,
             HttpServletRequest request) {
         Long userId = getUserIdFromToken(request);
@@ -48,6 +48,28 @@ public class MessageController {
             return ApiResponse.error(401, "未登录");
         }
         return ApiResponse.success(messageService.getConversation(userId, targetUserId));
+    }
+
+    @GetMapping("/recipient")
+    public ApiResponse<Map<String, Object>> findRecipient(
+            @RequestParam String username,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromToken(request);
+        if (userId == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        String normalizedUsername = username == null ? "" : username.trim();
+        if (normalizedUsername.isEmpty()) {
+            return ApiResponse.error(400, "请输入用户名");
+        }
+        Map<String, Object> recipient = messageService.findRecipient(normalizedUsername);
+        if (recipient == null) {
+            return ApiResponse.error(404, "未找到该用户");
+        }
+        if (userId.equals(recipient.get("userId"))) {
+            return ApiResponse.error(400, "不能给自己发送私信");
+        }
+        return ApiResponse.success(recipient);
     }
     
     @PostMapping("/send")
@@ -58,12 +80,23 @@ public class MessageController {
         if (userId == null) {
             return ApiResponse.error(401, "未登录");
         }
-        Long toUserId = Long.parseLong(request.get("toUserId"));
+        Long toUserId;
+        try {
+            toUserId = Long.parseLong(request.get("toUserId"));
+        } catch (RuntimeException e) {
+            return ApiResponse.error(400, "收件人无效");
+        }
+        if (userId.equals(toUserId)) {
+            return ApiResponse.error(400, "不能给自己发送私信");
+        }
+        if (!messageService.recipientExists(toUserId)) {
+            return ApiResponse.error(404, "收件人不存在");
+        }
         String content = request.get("content");
-        if (content == null || content.isEmpty()) {
+        if (content == null || content.trim().isEmpty()) {
             return ApiResponse.error(400, "消息内容不能为空");
         }
-        return ApiResponse.success(messageService.sendMessage(userId, toUserId, content));
+        return ApiResponse.success(messageService.sendMessage(userId, toUserId, content.trim()));
     }
     
     @PostMapping("/mark-read")
