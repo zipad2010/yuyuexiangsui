@@ -1,5 +1,27 @@
 # 如月相随
 
+## Android 本地素材
+
+`START.wav` 和 `图标.png` 未纳入版本控制，但 Android 源码分别引用了
+`R.raw.start` 和 `R.drawable.icon_app`。干净检出仓库后，构建前需要自行准备这两个素材，
+并复制到以下位置：
+
+```text
+VoiceAssistant/app/src/main/res/raw/start.wav
+VoiceAssistant/app/src/main/res/drawable-nodpi/icon_app.png
+```
+
+如果素材文件位于仓库根目录，可执行：
+
+```bash
+mkdir -p VoiceAssistant/app/src/main/res/raw
+mkdir -p VoiceAssistant/app/src/main/res/drawable-nodpi
+cp START.wav VoiceAssistant/app/src/main/res/raw/start.wav
+cp 图标.png VoiceAssistant/app/src/main/res/drawable-nodpi/icon_app.png
+```
+
+缺少任一目标文件时，Android 资源编译会因无法解析对应的 `R` 资源而失败。
+
 ## 后端外部配置
 
 仓库中的 `voice-backend/src/main/resources/application.yml` 只是配置模板。生产服务器使用与 JAR 同目录的外部 `application.yml`，不要把服务器密钥写回仓库。
