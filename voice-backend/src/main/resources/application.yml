@@ -19,7 +19,9 @@ app:
   upload:
     root-path: ${UPLOAD_ROOT_PATH:/www/wwwroot/voice-backend/uploads/}
     avatar-path: ${AVATAR_UPLOAD_PATH:/www/wwwroot/voice-backend/uploads/avatars/}
-    avatar-url-base: ${AVATAR_URL_BASE}
+    avatar-url-base: ${AVATAR_URL_BASE:/uploads/avatars/}
+    wallpaper-path: ${WALLPAPER_UPLOAD_PATH:/www/wwwroot/voice-backend/uploads/wallpapers/}
+    wallpaper-url-base: ${WALLPAPER_URL_BASE:/uploads/wallpapers/}
 
 api:
   baidu:

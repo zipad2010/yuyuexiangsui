@@ -48,7 +48,7 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ViewHolder> 
             String avatarUrl = reply.optString("avatarUrl");
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
                 Glide.with(holder.itemView.getContext())
-                        .load(avatarUrl)
+                        .load(ApiClient.resolveResourceUrl(avatarUrl))
                         .into(holder.ivAvatar);
             }
         } catch (Exception e) {

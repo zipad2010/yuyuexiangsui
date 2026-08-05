@@ -27,6 +27,12 @@ public class UserProfileService {
 
     @Value("${app.upload.avatar-url-base}")
     private String avatarUrlBase;
+
+    @Value("${app.upload.wallpaper-path:/www/wwwroot/voice-backend/uploads/wallpapers/}")
+    private String wallpaperUploadPath;
+
+    @Value("${app.upload.wallpaper-url-base:${app.upload.avatar-url-base}}")
+    private String wallpaperUrlBase;
     
     public Map<String, Object> getProfile(Long userId) {
         Map<String, Object> profile = new HashMap<>();
@@ -45,6 +51,7 @@ public class UserProfileService {
         profile.put("nickname", user.getNickname() == null ? user.getUsername() : user.getNickname());
         profile.put("signature", user.getSignature() == null ? "" : user.getSignature());
         profile.put("avatarUrl", user.getAvatarUrl() == null ? "" : user.getAvatarUrl());
+        profile.put("wallpaperUrl", user.getWallpaperUrl() == null ? "" : user.getWallpaperUrl());
         
         return profile;
     }
@@ -100,6 +107,39 @@ public class UserProfileService {
             user.setUpdatedAt(new java.util.Date());
             userRepository.save(user);
             return avatarUrl;
+        } catch (IOException e) {
+            throw new RuntimeException("上传失败", e);
+        }
+    }
+
+    @Transactional
+    public String uploadWallpaper(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("请选择壁纸图片");
+        }
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("壁纸不能超过 10MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("仅支持图片文件");
+        }
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+            File dir = new File(wallpaperUploadPath);
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new IOException("无法创建壁纸目录");
+            }
+            String fileName = userId + "_" + UUID.randomUUID().toString() + ".jpg";
+            file.transferTo(new File(dir, fileName));
+
+            String baseUrl = wallpaperUrlBase.endsWith("/") ? wallpaperUrlBase : wallpaperUrlBase + "/";
+            String wallpaperUrl = baseUrl + fileName;
+            user.setWallpaperUrl(wallpaperUrl);
+            user.setUpdatedAt(new java.util.Date());
+            userRepository.save(user);
+            return wallpaperUrl;
         } catch (IOException e) {
             throw new RuntimeException("上传失败", e);
         }

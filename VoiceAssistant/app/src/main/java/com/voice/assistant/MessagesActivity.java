@@ -6,7 +6,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -15,7 +14,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MessagesActivity extends AppCompatActivity {
+public class MessagesActivity extends WallpaperActivity {
     
     private RecyclerView rvConversations;
     private ApiClient apiClient;
@@ -121,6 +120,20 @@ public class MessagesActivity extends AppCompatActivity {
                 }
             } catch (Exception e) {
                 runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (apiClient == null || tokenManager == null) {
+            return;
+        }
+        new Thread(() -> {
+            try {
+                apiClient.markMessagesRead(tokenManager.getToken());
+            } catch (Exception ignored) {
             }
         }).start();
     }

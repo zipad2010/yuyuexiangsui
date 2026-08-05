@@ -16,6 +16,9 @@ public interface PrivateMessageRepository extends JpaRepository<PrivateMessage, 
     @Query("SELECT m FROM PrivateMessage m WHERE (m.fromUserId = :userId1 AND m.toUserId = :userId2) OR (m.fromUserId = :userId2 AND m.toUserId = :userId1) ORDER BY m.createdAt ASC")
     List<PrivateMessage> findConversation(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
 
+    @Query("SELECT COUNT(m) FROM PrivateMessage m WHERE m.toUserId = :userId AND m.isRead = 0")
+    long countUnreadByUserId(@Param("userId") Long userId);
+
     @Modifying
     @Transactional
     @Query("UPDATE PrivateMessage m SET m.isRead = 1 WHERE m.toUserId = :userId AND m.isRead = 0")

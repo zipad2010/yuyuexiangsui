@@ -69,6 +69,10 @@ public class MessageService {
         return userId != null && userRepository.existsById(userId);
     }
 
+    public long getUnreadCount(Long userId) {
+        return privateMessageRepository.countUnreadByUserId(userId);
+    }
+
     /**
      * 发送私信
      */

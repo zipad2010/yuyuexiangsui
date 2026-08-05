@@ -64,7 +64,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
                 Glide.with(holder.itemView.getContext())
-                        .load(avatarUrl)
+                        .load(ApiClient.resolveResourceUrl(avatarUrl))
                         .into(holder.ivAvatar);
             }
             

@@ -4,8 +4,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONArray;
@@ -14,7 +14,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PostDetailActivity extends AppCompatActivity {
+public class PostDetailActivity extends WallpaperActivity {
     
     private RecyclerView rvReplies;
     private EditText etReply;
@@ -24,6 +24,8 @@ public class PostDetailActivity extends AppCompatActivity {
     private List<JSONObject> replies;
     private ReplyAdapter adapter;
     private long postId;
+    private TextView tvPostTitle;
+    private TextView tvPostContent;
     
     public static android.content.Intent newIntent(android.content.Context context, long postId) {
         android.content.Intent intent = new android.content.Intent(context, PostDetailActivity.class);
@@ -52,6 +54,8 @@ public class PostDetailActivity extends AppCompatActivity {
     }
     
     private void initViews() {
+        tvPostTitle = findViewById(R.id.tv_post_title);
+        tvPostContent = findViewById(R.id.tv_post_content);
         rvReplies = findViewById(R.id.rv_replies);
         etReply = findViewById(R.id.et_reply);
         btnSendReply = findViewById(R.id.btn_send_reply);
@@ -69,18 +73,24 @@ public class PostDetailActivity extends AppCompatActivity {
                 JSONObject json = new JSONObject(response);
                 if (json.optInt("code", -1) == 200) {
                     JSONObject data = json.optJSONObject("data");
-                    JSONArray repliesArray = data != null ? data.optJSONArray("replies") : null;
-                    List<JSONObject> newReplies = new ArrayList<>();
-                    if (repliesArray != null) {
-                        for (int i = 0; i < repliesArray.length(); i++) {
-                            newReplies.add(repliesArray.optJSONObject(i));
+                    if (data != null) {
+                        final String title = data.optString("title", "");
+                        final String content = data.optString("content", "");
+                        final JSONArray repliesArray = data.optJSONArray("replies");
+                        List<JSONObject> newReplies = new ArrayList<>();
+                        if (repliesArray != null) {
+                            for (int i = 0; i < repliesArray.length(); i++) {
+                                newReplies.add(repliesArray.optJSONObject(i));
+                            }
                         }
+                        runOnUiThread(() -> {
+                            tvPostTitle.setText(title);
+                            tvPostContent.setText(content);
+                            replies.clear();
+                            replies.addAll(newReplies);
+                            adapter.notifyDataSetChanged();
+                        });
                     }
-                    runOnUiThread(() -> {
-                        replies.clear();
-                        replies.addAll(newReplies);
-                        adapter.notifyDataSetChanged();
-                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();

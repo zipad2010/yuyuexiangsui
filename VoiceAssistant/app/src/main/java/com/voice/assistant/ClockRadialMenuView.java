@@ -20,6 +20,8 @@ import java.util.List;
 
 public class ClockRadialMenuView extends View {
 
+    private static final int MAX_VISIBLE_ITEMS = 7;
+
     public interface Listener {
         void onMenuAction(int itemId);
         void onMenuStateChanged(boolean open);
@@ -45,6 +47,11 @@ public class ClockRadialMenuView extends View {
     private final Paint hubPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint hubRingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint scrimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint glassStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint scrollTrackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint scrollThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint badgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint badgeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<MenuItem> items = new ArrayList<>();
 
     private Listener listener;
@@ -53,9 +60,14 @@ public class ClockRadialMenuView extends View {
     private float axisY = -1f;
     private float downY;
     private float initialAxisY;
+    private float initialScrollOffset;
+    private float menuScrollOffset;
     private boolean dragging;
+    private boolean scrollingItems;
     private boolean open;
     private boolean sponsorVisible;
+    private int forumUnreadCount;
+    private int privateMessageUnreadCount;
     private String accountName = "账号";
     private String accountHandle = "";
     private String accountSignature = "";
@@ -69,8 +81,8 @@ public class ClockRadialMenuView extends View {
         super(context, attrs);
         density = getResources().getDisplayMetrics().density;
         hubRadius = dp(27);
-        preferredItemWidth = dp(138);
-        preferredItemHeight = dp(38);
+        preferredItemWidth = dp(132);
+        preferredItemHeight = dp(34);
         configurePaints();
         buildItems();
     }
@@ -83,7 +95,21 @@ public class ClockRadialMenuView extends View {
         tickPaint.setColor(Color.argb(105, 118, 31, 54));
         tickPaint.setStrokeWidth(dp(1));
 
-        panelPaint.setColor(Color.argb(224, 255, 255, 255));
+        panelPaint.setColor(Color.argb(168, 255, 255, 255));
+
+        glassStrokePaint.setColor(Color.argb(152, 255, 255, 255));
+        glassStrokePaint.setStyle(Paint.Style.STROKE);
+        glassStrokePaint.setStrokeWidth(dp(1));
+
+        scrollTrackPaint.setColor(Color.argb(82, 255, 255, 255));
+        scrollTrackPaint.setStyle(Paint.Style.STROKE);
+        scrollTrackPaint.setStrokeWidth(dp(2));
+        scrollTrackPaint.setStrokeCap(Paint.Cap.ROUND);
+
+        scrollThumbPaint.setColor(Color.argb(215, 255, 255, 255));
+        scrollThumbPaint.setStyle(Paint.Style.STROKE);
+        scrollThumbPaint.setStrokeWidth(dp(3));
+        scrollThumbPaint.setStrokeCap(Paint.Cap.ROUND);
 
         textPaint.setColor(Color.rgb(42, 34, 39));
         textPaint.setTextSize(dp(13));
@@ -96,11 +122,17 @@ public class ClockRadialMenuView extends View {
         hubRingPaint.setStrokeWidth(dp(2));
 
         scrimPaint.setColor(Color.argb(82, 24, 17, 22));
+
+        badgePaint.setColor(Color.rgb(197, 46, 70));
+        badgeTextPaint.setColor(Color.WHITE);
+        badgeTextPaint.setTextAlign(Paint.Align.CENTER);
+        badgeTextPaint.setTextSize(dp(10));
+        badgeTextPaint.setFakeBoldText(true);
     }
 
     private void buildItems() {
         items.clear();
-        addItem(R.id.nav_home, "返回对话", R.drawable.ic_home);
+        addItem(R.id.nav_home, "对话", R.drawable.ic_home);
         addItem(R.id.nav_profile, "个人中心", R.drawable.ic_edit);
         addItem(R.id.nav_forum, "社区论坛", R.drawable.ic_forum);
         addItem(R.id.nav_messages, "我的私信", R.drawable.ic_send);
@@ -134,6 +166,12 @@ public class ClockRadialMenuView extends View {
         accountName = name == null || name.trim().isEmpty() ? "账号" : name.trim();
         accountHandle = username == null || username.trim().isEmpty() ? "" : "@" + username.trim();
         accountSignature = signature == null ? "" : signature.trim();
+        invalidate();
+    }
+
+    public void setUnreadCounts(int forumCount, int privateMessageCount) {
+        forumUnreadCount = Math.max(0, forumCount);
+        privateMessageUnreadCount = Math.max(0, privateMessageCount);
         invalidate();
     }
 
@@ -182,7 +220,7 @@ public class ClockRadialMenuView extends View {
         super.onDraw(canvas);
         float axisX = dp(16);
         if (animationProgress > 0f) {
-            scrimPaint.setAlpha(Math.round(82 * animationProgress));
+            scrimPaint.setAlpha(Math.round(32 * animationProgress));
             canvas.drawRect(0, 0, getWidth(), getHeight(), scrimPaint);
             drawClockArc(canvas, axisX);
             drawAccountPlate(canvas, axisX);
@@ -196,8 +234,10 @@ public class ClockRadialMenuView extends View {
         float plateLeft = axisX + dp(44);
         float plateTop = Math.max(dp(18), axisY - radius - dp(54));
         RectF plate = new RectF(plateLeft, plateTop, plateLeft + dp(132), plateTop + dp(52));
-        panelPaint.setAlpha(Math.round(218 * animationProgress));
+        panelPaint.setAlpha(Math.round(150 * animationProgress));
         canvas.drawRoundRect(plate, dp(8), dp(8), panelPaint);
+        glassStrokePaint.setAlpha(Math.round(152 * animationProgress));
+        canvas.drawRoundRect(plate, dp(8), dp(8), glassStrokePaint);
 
         textPaint.setAlpha(Math.round(255 * animationProgress));
         textPaint.setTextSize(dp(13));
@@ -238,18 +278,43 @@ public class ClockRadialMenuView extends View {
             float innerY = axisY + (float) Math.sin(angle) * (radius - tickLength);
             canvas.drawLine(innerX, innerY, outerX, outerY, tickPaint);
         }
+        drawScrollIndicator(canvas, axisX, radius);
+    }
+
+    private void drawScrollIndicator(Canvas canvas, float axisX, float radius) {
+        if (items.size() <= MAX_VISIBLE_ITEMS) {
+            return;
+        }
+        RectF indicatorBounds = new RectF(axisX - radius + dp(16), axisY - radius + dp(16),
+                axisX + radius - dp(16), axisY + radius - dp(16));
+        scrollTrackPaint.setAlpha(Math.round(110 * animationProgress));
+        canvas.drawArc(indicatorBounds, -68, 136, false, scrollTrackPaint);
+
+        float maxOffset = items.size() - MAX_VISIBLE_ITEMS;
+        float thumbSweep = 136f * MAX_VISIBLE_ITEMS / items.size();
+        float availableSweep = 136f - thumbSweep;
+        float thumbStart = -68f + availableSweep * (menuScrollOffset / maxOffset);
+        scrollThumbPaint.setAlpha(Math.round(235 * animationProgress));
+        canvas.drawArc(indicatorBounds, thumbStart, thumbSweep, false, scrollThumbPaint);
     }
 
     private void drawItems(Canvas canvas, float axisX) {
         int count = items.size();
+        int visibleCount = Math.min(count, MAX_VISIBLE_ITEMS);
         float radius = menuRadius();
         float itemHeight = Math.min(preferredItemHeight,
-            Math.max(dp(32), availableMenuHeight() / count - dp(7)));
+            Math.max(dp(32), availableMenuHeight() / visibleCount - dp(7)));
         float itemWidth = Math.min(preferredItemWidth, getWidth() - dp(190));
         for (int index = 0; index < count; index++) {
-            float stagger = index * 0.022f;
+            float displayIndex = index - menuScrollOffset;
+            if (displayIndex < -1f || displayIndex > visibleCount) {
+                items.get(index).bounds.setEmpty();
+                continue;
+            }
+            float stagger = Math.max(0f, displayIndex) * 0.022f;
             float localProgress = clamp((animationProgress - stagger) / (1f - stagger));
-                float normalizedY = count == 1 ? 0f : -0.86f + (1.72f * index / (count - 1));
+                float normalizedY = visibleCount == 1 ? 0f
+                        : -0.86f + (1.72f * displayIndex / (visibleCount - 1));
                 float targetYOffset = normalizedY * radius;
                 float targetXOffset = (float) Math.sqrt(
                     Math.max(0f, radius * radius - targetYOffset * targetYOffset));
@@ -264,8 +329,10 @@ public class ClockRadialMenuView extends View {
             item.bounds.set(centerX - halfWidth, centerY - halfHeight,
                     centerX + halfWidth, centerY + halfHeight);
 
-            panelPaint.setAlpha(Math.round(224 * localProgress));
+            panelPaint.setAlpha(Math.round(168 * localProgress));
             canvas.drawRoundRect(item.bounds, dp(8), dp(8), panelPaint);
+            glassStrokePaint.setAlpha(Math.round(152 * localProgress));
+            canvas.drawRoundRect(item.bounds, dp(8), dp(8), glassStrokePaint);
             textPaint.setAlpha(Math.round(255 * localProgress));
             float textY = centerY - (textPaint.ascent() + textPaint.descent()) / 2f;
             canvas.drawText(item.label, item.bounds.left + dp(14), textY, textPaint);
@@ -278,7 +345,25 @@ public class ClockRadialMenuView extends View {
                 item.icon.setAlpha(Math.round(255 * localProgress));
                 item.icon.draw(canvas);
             }
+            drawUnreadBadge(canvas, item, localProgress);
         }
+    }
+
+    private void drawUnreadBadge(Canvas canvas, MenuItem item, float progress) {
+        int unreadCount = item.id == R.id.nav_forum ? forumUnreadCount
+                : item.id == R.id.nav_messages ? privateMessageUnreadCount : 0;
+        if (unreadCount <= 0) {
+            return;
+        }
+        float radius = dp(10);
+        float centerX = item.bounds.right - dp(6);
+        float centerY = item.bounds.top + dp(6);
+        badgePaint.setAlpha(Math.round(255 * progress));
+        canvas.drawCircle(centerX, centerY, radius, badgePaint);
+        badgeTextPaint.setAlpha(Math.round(255 * progress));
+        String label = unreadCount > 99 ? "99+" : String.valueOf(unreadCount);
+        float textY = centerY - (badgeTextPaint.ascent() + badgeTextPaint.descent()) / 2f;
+        canvas.drawText(label, centerX, textY, badgeTextPaint);
     }
 
     private void drawHub(Canvas canvas, float axisX) {
@@ -305,20 +390,42 @@ public class ClockRadialMenuView extends View {
                     downY = event.getY();
                     initialAxisY = axisY;
                     dragging = false;
+                    scrollingItems = false;
                     return true;
                 }
                 if (open) {
                     for (MenuItem item : items) {
                         if (item.bounds.contains(event.getX(), event.getY())) {
                             setTag(item.id);
+                            downY = event.getY();
+                            initialScrollOffset = menuScrollOffset;
+                            scrollingItems = false;
                             return true;
                         }
+                    }
+                    if (event.getX() > axisX + dp(24)) {
+                        downY = event.getY();
+                        initialScrollOffset = menuScrollOffset;
+                        scrollingItems = false;
+                        return true;
                     }
                     close();
                     return true;
                 }
                 return false;
             case MotionEvent.ACTION_MOVE:
+                if (open && initialAxisY < 0f) {
+                    float deltaY = event.getY() - downY;
+                    if (Math.abs(deltaY) > dp(5)) {
+                        scrollingItems = true;
+                        setTag(null);
+                        float itemHeight = Math.max(dp(32), availableMenuHeight()
+                                / Math.min(items.size(), MAX_VISIBLE_ITEMS) - dp(7));
+                        menuScrollOffset = clampScrollOffset(initialScrollOffset - deltaY / itemHeight);
+                        invalidate();
+                    }
+                    return true;
+                }
                 if (initialAxisY > 0f) {
                     float deltaY = event.getY() - downY;
                     if (Math.abs(deltaY) > dp(5)) {
@@ -336,7 +443,7 @@ public class ClockRadialMenuView extends View {
                 Object selectedId = getTag();
                 setTag(null);
                 initialAxisY = -1f;
-                if (selectedId instanceof Integer && !dragging) {
+                if (selectedId instanceof Integer && !dragging && !scrollingItems) {
                     close();
                     if (listener != null) {
                         listener.onMenuAction((Integer) selectedId);
@@ -344,12 +451,16 @@ public class ClockRadialMenuView extends View {
                     return true;
                 }
                 if (!dragging) {
-                    toggle();
+                    if (!scrollingItems) {
+                        toggle();
+                    }
                 }
+                scrollingItems = false;
                 return true;
             case MotionEvent.ACTION_CANCEL:
                 initialAxisY = -1f;
                 setTag(null);
+                scrollingItems = false;
                 return true;
             default:
                 return false;
@@ -359,8 +470,8 @@ public class ClockRadialMenuView extends View {
     private float menuRadius() {
         float widthLimit = getWidth() - dp(16 + 30 + 69 + 12);
         float heightLimit = availableMenuHeight() / 2f;
-        float spacingRadius = (preferredItemHeight + dp(8)) * Math.max(1, items.size() - 1) / 1.96f;
-        return Math.max(dp(145), Math.min(dp(218), Math.min(widthLimit,
+        float spacingRadius = (preferredItemHeight + dp(5)) * Math.max(1, MAX_VISIBLE_ITEMS - 1) / 1.96f;
+        return Math.max(dp(118), Math.min(dp(170), Math.min(widthLimit,
                 Math.max(spacingRadius, heightLimit * 0.92f))));
     }
 
@@ -374,6 +485,10 @@ public class ClockRadialMenuView extends View {
 
     private float clamp(float value) {
         return Math.max(0f, Math.min(1f, value));
+    }
+
+    private float clampScrollOffset(float value) {
+        return Math.max(0f, Math.min(Math.max(0, items.size() - MAX_VISIBLE_ITEMS), value));
     }
 
     private float distance(float x1, float y1, float x2, float y2) {

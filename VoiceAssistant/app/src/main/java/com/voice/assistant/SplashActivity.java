@@ -76,7 +76,7 @@ public class SplashActivity extends AppCompatActivity {
 
     private void openNextScreen() {
         Class<?> destination = new TokenManager(this).isLoggedIn()
-                ? MainActivity.class
+                ? HomeActivity.class
                 : LoginActivity.class;
         startActivity(new Intent(this, destination));
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

@@ -9,7 +9,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import com.bumptech.glide.Glide;
@@ -20,7 +19,7 @@ import okhttp3.*;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends WallpaperActivity {
     
     private EditText etNickname, etSignature;
     private Button btnSave;
@@ -36,6 +35,11 @@ public class ProfileActivity extends AppCompatActivity {
         
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
+        if (!tokenManager.isLoggedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
         avatarPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 uploadAvatar(uri);
@@ -57,30 +61,47 @@ public class ProfileActivity extends AppCompatActivity {
     }
     
     private void loadProfile() {
+        String token = tokenManager.getToken();
+        if (token == null || token.trim().isEmpty()) {
+            handleProfileError(401, "登录已失效，请重新登录");
+            return;
+        }
         new Thread(() -> {
             try {
-                String response = apiClient.getProfile(tokenManager.getToken());
+                String response = apiClient.getProfile(token);
                 JSONObject json = new JSONObject(response);
-                if (json.getInt("code") == 200) {
-                    JSONObject data = json.getJSONObject("data");
+                int code = json.optInt("code", -1);
+                if (code == 200) {
+                    JSONObject data = json.optJSONObject("data");
+                    if (data == null) {
+                        throw new JSONException("资料响应缺少 data 字段");
+                    }
                     String nickname = data.optString("nickname", tokenManager.getUsername());
                     String signature = data.optString("signature", "");
-                    String avatarUrl = data.optString("avatarUrl", null);
+                    String avatarUrl = data.optString("avatarUrl", "");
                     
                     runOnUiThread(() -> {
                         etNickname.setText(nickname);
                         etSignature.setText(signature);
-                        if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                            Glide.with(this).load(avatarUrl).into(ivAvatar);
+                        if (!avatarUrl.isEmpty()) {
+                            Glide.with(this)
+                                .load(ApiClient.resolveResourceUrl(avatarUrl))
+                                .placeholder(R.drawable.ic_default_avatar)
+                                .error(R.drawable.ic_default_avatar)
+                                .into(ivAvatar);
                         }
                     });
                 } else {
                     String message = json.optString("message", "资料加载失败");
-                    int code = json.optInt("code", -1);
                     runOnUiThread(() -> handleProfileError(code, message));
                 }
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "无法加载个人资料", Toast.LENGTH_SHORT).show());
+                String message = e.getMessage();
+                runOnUiThread(() -> Toast.makeText(this,
+                        message == null || message.trim().isEmpty()
+                                ? "无法加载个人资料，请检查网络或服务状态"
+                                : "无法加载个人资料: " + message,
+                        Toast.LENGTH_LONG).show());
             }
         }).start();
     }

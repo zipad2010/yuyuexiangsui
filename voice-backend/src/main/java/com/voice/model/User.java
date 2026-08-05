@@ -28,6 +28,9 @@ public class User {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "wallpaper_url", length = 500)
+    private String wallpaperUrl;
+
     @Column(precision = 10, scale = 4)
     private BigDecimal balance = BigDecimal.ZERO;
 
@@ -106,6 +109,14 @@ public class User {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getWallpaperUrl() {
+        return wallpaperUrl;
+    }
+
+    public void setWallpaperUrl(String wallpaperUrl) {
+        this.wallpaperUrl = wallpaperUrl;
     }
 
     public BigDecimal getBalance() {

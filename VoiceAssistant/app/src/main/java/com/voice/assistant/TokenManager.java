@@ -9,6 +9,7 @@ public class TokenManager {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_FORUM_CHECKED_AT = "forum_checked_at";
     
     private SharedPreferences prefs;
     
@@ -30,6 +31,10 @@ public class TokenManager {
     public String getBalance() { return prefs.getString(KEY_BALANCE, "0"); }
     public long getUserId() { return prefs.getLong(KEY_USER_ID, 0); }
     public void updateBalance(String balance) { prefs.edit().putString(KEY_BALANCE, balance).apply(); }
+    public long getForumCheckedAt() { return prefs.getLong(KEY_FORUM_CHECKED_AT, 0L); }
+    public void updateForumCheckedAt(long checkedAt) {
+        prefs.edit().putLong(KEY_FORUM_CHECKED_AT, checkedAt).apply();
+    }
     public void clear() { prefs.edit().clear().apply(); }
     public boolean isLoggedIn() { return getToken() != null && getUserId() > 0; }
 }

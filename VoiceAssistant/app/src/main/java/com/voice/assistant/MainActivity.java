@@ -6,11 +6,14 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.provider.OpenableColumns;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.MediaPlayer;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.os.Build;
@@ -45,10 +48,9 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends WallpaperActivity {
 
-    private static final String UI_PREFS_NAME = "ui_preferences";
-    private static final String KEY_BACKGROUND_URI = "custom_background_uri";
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 2;
     
     private RecyclerView rvMessages;
     private FloatingActionButton fabVoice;
@@ -68,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private ApiClient apiClient;
     private TokenManager tokenManager;
     private AudioPlayer audioPlayer;
+    private MediaPlayer startSoundPlayer;
     private Handler mainHandler;
     
     private boolean isRecording = false;
@@ -93,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
             startLoginActivity();
             return;
         }
+
+        playStartSound();
         
         initViews();
         setupListeners();
@@ -101,6 +106,23 @@ public class MainActivity extends AppCompatActivity {
         loadUserProfile();   // 加载用户头像和昵称
         loadChatHistory();
         checkPermission();
+        NotificationHelper.createChannel(this);
+        requestNotificationPermission();
+        refreshNotifications();
+    }
+
+    private void playStartSound() {
+        startSoundPlayer = MediaPlayer.create(this, R.raw.start);
+        if (startSoundPlayer == null) {
+            return;
+        }
+        startSoundPlayer.setOnCompletionListener(player -> {
+            player.release();
+            if (startSoundPlayer == player) {
+                startSoundPlayer = null;
+            }
+        });
+        startSoundPlayer.start();
     }
     
     private void checkPermission() {
@@ -108,6 +130,16 @@ public class MainActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        }
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    NOTIFICATION_PERMISSION_REQUEST_CODE);
         }
     }
     
@@ -191,9 +223,15 @@ public class MainActivity extends AppCompatActivity {
                     String nickname = data.optString("nickname", tokenManager.getUsername());
                     String signature = data.optString("signature", "让每次对话都有温度");
                     String avatarUrl = data.optString("avatarUrl", null);
+                    String wallpaperUrl = data.optString("wallpaperUrl", "");
                     runOnUiThread(() -> {
                         clockMenu.setAccount(nickname, tokenManager.getUsername(),
                                 signature.isEmpty() ? "让每次对话都有温度" : signature);
+                        if (!wallpaperUrl.isEmpty()) {
+                            Uri wallpaperUri = Uri.parse(ApiClient.resolveResourceUrl(wallpaperUrl));
+                            saveWallpaperUri(this, wallpaperUri);
+                            displayCustomBackground(wallpaperUri);
+                        }
                     });
                 }
             } catch (Exception e) {
@@ -216,12 +254,9 @@ public class MainActivity extends AppCompatActivity {
         try {
             getContentResolver().takePersistableUriPermission(
                     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
-                    .edit()
-                    .putString(KEY_BACKGROUND_URI, uri.toString())
-                    .apply();
+                saveWallpaperUri(this, uri);
             displayCustomBackground(uri);
-            Toast.makeText(this, "聊天背景已更新", Toast.LENGTH_SHORT).show();
+            uploadCustomBackground(uri);
         } catch (SecurityException e) {
             Toast.makeText(this, "无法长期读取所选图片，请重新选择", Toast.LENGTH_SHORT).show();
         }
@@ -238,6 +273,55 @@ public class MainActivity extends AppCompatActivity {
     private void displayCustomBackground(Uri uri) {
         ivCustomBackground.setVisibility(View.VISIBLE);
         Glide.with(this).load(uri).centerCrop().into(ivCustomBackground);
+        saveWallpaperUri(this, uri);
+    }
+
+    private void uploadCustomBackground(Uri uri) {
+        new Thread(() -> {
+            try {
+                byte[] imageData = readBytes(uri);
+                if (imageData.length > 10 * 1024 * 1024) {
+                    throw new IllegalArgumentException("壁纸不能超过 10MB");
+                }
+                String mimeType = getContentResolver().getType(uri);
+                String response = apiClient.uploadWallpaper(imageData, getDisplayName(uri),
+                        mimeType == null ? "image/jpeg" : mimeType, tokenManager.getToken());
+                JSONObject json = new JSONObject(response);
+                String message = json.optString("message", "壁纸上传失败");
+                runOnUiThread(() -> Toast.makeText(this,
+                        json.optInt("code", -1) == 200 ? "壁纸已同步到云端" : message,
+                        Toast.LENGTH_SHORT).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "壁纸仅保存在本机", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private byte[] readBytes(Uri uri) throws Exception {
+        try (java.io.InputStream input = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) {
+                throw new IllegalArgumentException("无法读取所选图片");
+            }
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                output.write(buffer, 0, count);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    private String getDisplayName(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    return cursor.getString(index);
+                }
+            }
+        }
+        return "wallpaper.jpg";
     }
 
     private void clearCustomBackground() {
@@ -257,7 +341,35 @@ public class MainActivity extends AppCompatActivity {
         if (clockMenu != null && tokenManager != null && tokenManager.isLoggedIn()) {
             showLocalAccountInfo();
             loadUserProfile();
+            refreshNotifications();
         }
+    }
+
+    private void refreshNotifications() {
+        new Thread(() -> {
+            try {
+                String response = apiClient.getNotificationSummary(tokenManager.getForumCheckedAt(),
+                        tokenManager.getToken());
+                JSONObject json = new JSONObject(response);
+                JSONObject data = json.optJSONObject("data");
+                if (json.optInt("code") != 200 || data == null) {
+                    return;
+                }
+                int forumUnread = data.optInt("forumReplyUnread", 0);
+                int privateMessageUnread = data.optInt("privateMessageUnread", 0);
+                runOnUiThread(() -> {
+                    if (clockMenu != null) {
+                        clockMenu.setUnreadCounts(forumUnread, privateMessageUnread);
+                    }
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                            || ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                        NotificationHelper.updateSummary(this, forumUnread, privateMessageUnread);
+                    }
+                });
+            } catch (Exception ignored) {
+            }
+        }).start();
     }
     
     private void setupListeners() {
@@ -648,5 +760,9 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (mainHandler != null) mainHandler.removeCallbacksAndMessages(null);
         if (audioPlayer != null) audioPlayer.shutdown();
+        if (startSoundPlayer != null) {
+            startSoundPlayer.release();
+            startSoundPlayer = null;
+        }
     }
 }

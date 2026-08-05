@@ -91,4 +91,24 @@ public class UserProfileController {
             return ApiResponse.error(500, e.getMessage());
         }
     }
+
+    @PostMapping("/wallpaper")
+    public ApiResponse<Map<String, String>> uploadWallpaper(
+            @RequestParam("wallpaper") MultipartFile file,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromToken(request);
+        if (userId == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        try {
+            String wallpaperUrl = userProfileService.uploadWallpaper(userId, file);
+            Map<String, String> result = new HashMap<>();
+            result.put("wallpaperUrl", wallpaperUrl);
+            return ApiResponse.success(result);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.error(500, e.getMessage());
+        }
+    }
 }

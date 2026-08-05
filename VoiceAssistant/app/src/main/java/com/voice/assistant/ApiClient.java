@@ -25,6 +25,14 @@ public class ApiClient {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .build();
     }
+
+    public static String resolveResourceUrl(String resourceUrl) {
+        if (resourceUrl == null || resourceUrl.trim().isEmpty()) {
+            return resourceUrl;
+        }
+        HttpUrl resolvedUrl = HttpUrl.parse(BASE_URL).resolve(resourceUrl);
+        return resolvedUrl == null ? resourceUrl : resolvedUrl.toString();
+    }
     
     // ========== 认证相关 ==========
     
@@ -189,6 +197,24 @@ public class ApiClient {
             return response.body().string();
         }
     }
+
+    public String uploadWallpaper(byte[] imageData, String fileName, String mimeType, String token) throws IOException {
+        RequestBody imageBody = RequestBody.create(imageData, MediaType.parse(mimeType));
+        MultipartBody body = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("wallpaper", fileName, imageBody)
+                .build();
+
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/user/wallpaper")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
     
     // ========== 论坛 ==========
     
@@ -300,6 +326,33 @@ public class ApiClient {
                 .post(RequestBody.create(body.toString(), JSON))
                 .build();
         
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    public String getNotificationSummary(long forumCheckedAt, String token) throws IOException {
+        HttpUrl url = HttpUrl.parse(BASE_URL + "/messages/notifications/summary").newBuilder()
+                .addQueryParameter("forumCheckedAt", String.valueOf(forumCheckedAt))
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    public String markMessagesRead(String token) throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/messages/mark-read")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(RequestBody.create(new byte[0], JSON))
+                .build();
+
         try (Response response = client.newCall(request).execute()) {
             return response.body().string();
         }

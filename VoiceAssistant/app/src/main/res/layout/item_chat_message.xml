@@ -24,7 +24,8 @@
             android:paddingStart="14dp"
             android:paddingTop="10dp"
             android:paddingEnd="14dp"
-            android:paddingBottom="10dp" />
+            android:paddingBottom="10dp"
+            android:foreground="@drawable/bg_frosted_panel" />
 
     </LinearLayout>
 
@@ -47,6 +48,7 @@
             android:paddingStart="14dp"
             android:paddingTop="10dp"
             android:paddingEnd="14dp"
+            android:foreground="@drawable/bg_frosted_panel"
             android:paddingBottom="10dp" />
 
     </LinearLayout>

@@ -7,6 +7,8 @@ import com.voice.config.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +22,9 @@ public class MessageController {
     
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private com.voice.service.ForumService forumService;
     
     private Long getUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -107,5 +112,20 @@ public class MessageController {
         }
         messageService.markAsRead(userId);
         return ApiResponse.success("已读");
+    }
+
+    @GetMapping("/notifications/summary")
+    public ApiResponse<Map<String, Object>> getNotificationSummary(
+            @RequestParam(required = false) Long forumCheckedAt,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromToken(request);
+        if (userId == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("privateMessageUnread", messageService.getUnreadCount(userId));
+        summary.put("forumReplyUnread", forumService.getNewReplyCount(userId,
+                new Date(forumCheckedAt == null ? 0L : forumCheckedAt)));
+        return ApiResponse.success(summary);
     }
 }
