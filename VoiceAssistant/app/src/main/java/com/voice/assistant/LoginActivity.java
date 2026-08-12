@@ -206,8 +206,12 @@ public class LoginActivity extends AppCompatActivity {
     }
     
     private void startMainActivity() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        startActivity(intent);
+        // 若用户从个人中心跳转过来登录，登录成功后回到个人中心查看资料
+        if (getIntent().getBooleanExtra("return_to_profile", false)) {
+            startActivity(new Intent(this, ProfileActivity.class));
+        } else {
+            startActivity(new Intent(this, HomeActivity.class));
+        }
         finish();
     }
 }

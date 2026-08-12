@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Windows 11 Mica 云母材质：柔和的多层渐变背景，颜色随主题自动切换 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:centerColor="@color/mica_center"
+        android:endColor="@color/mica_end"
+        android:startColor="@color/mica_start" />
+</shape>

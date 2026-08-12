@@ -79,10 +79,25 @@ public class HomeActivity extends WallpaperActivity {
     }
 
     private void loadLocationAndWeather() {
+        // 防御性检查：权限可能被用户拒绝或在回调前被撤销
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            tvLocation.setText("暂未定位");
+            tvWeather.setText("天气待更新");
+            return;
+        }
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        if (location == null) {
-            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location location;
+        try {
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (location == null) {
+                location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
+        } catch (SecurityException e) {
+            tvLocation.setText("暂未定位");
+            tvWeather.setText("天气待更新");
+            return;
         }
         if (location == null) {
             tvLocation.setText("暂未定位");

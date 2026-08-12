@@ -122,10 +122,26 @@ public class MessageController {
         if (userId == null) {
             return ApiResponse.error(401, "未登录");
         }
+        java.util.Date lastChecked = new Date(forumCheckedAt == null ? 0L : forumCheckedAt);
         Map<String, Object> summary = new HashMap<>();
         summary.put("privateMessageUnread", messageService.getUnreadCount(userId));
-        summary.put("forumReplyUnread", forumService.getNewReplyCount(userId,
-                new Date(forumCheckedAt == null ? 0L : forumCheckedAt)));
+        summary.put("forumReplyUnread", forumService.getNewReplyCount(userId, lastChecked));
+        summary.put("recentMessages", messageService.getRecentUnreadMessages(userId, 20));
+        summary.put("recentReplies", forumService.getNewRepliesForPostOwner(userId, lastChecked));
         return ApiResponse.success(summary);
+    }
+
+    /**
+     * 发起私信时的用户列表：按用户名/昵称模糊搜索；keyword 为空返回全部用户
+     */
+    @GetMapping("/recipients")
+    public ApiResponse<List<Map<String, Object>>> searchRecipients(
+            @RequestParam(required = false) String keyword,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromToken(request);
+        if (userId == null) {
+            return ApiResponse.error(401, "未登录");
+        }
+        return ApiResponse.success(messageService.searchUsers(userId, keyword));
     }
 }

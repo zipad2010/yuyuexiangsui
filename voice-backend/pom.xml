@@ -60,6 +60,13 @@
             <groupId>com.baidu.aip</groupId>
             <artifactId>java-sdk</artifactId>
             <version>4.16.19</version>
+            <exclusions>
+                <!-- 排除百度 SDK 传递引入的 slf4j-simple，避免与 Spring Boot 的 logback 冲突 -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

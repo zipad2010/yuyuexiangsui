@@ -2,6 +2,7 @@ package com.voice.assistant;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -29,7 +30,7 @@ public class ClockRadialMenuView extends View {
 
     private static class MenuItem {
         final int id;
-        final String label;
+        String label;
         final Drawable icon;
         final RectF bounds = new RectF();
 
@@ -66,6 +67,8 @@ public class ClockRadialMenuView extends View {
     private boolean scrollingItems;
     private boolean open;
     private boolean sponsorVisible;
+    private boolean adminVisible;
+    private boolean darkModeEnabled;
     private int forumUnreadCount;
     private int privateMessageUnreadCount;
     private String accountName = "账号";
@@ -88,6 +91,7 @@ public class ClockRadialMenuView extends View {
     }
 
     private void configurePaints() {
+        boolean night = isNightMode();
         arcPaint.setColor(Color.argb(145, 200, 47, 72));
         arcPaint.setStyle(Paint.Style.STROKE);
         arcPaint.setStrokeWidth(dp(1.3f));
@@ -95,9 +99,9 @@ public class ClockRadialMenuView extends View {
         tickPaint.setColor(Color.argb(105, 118, 31, 54));
         tickPaint.setStrokeWidth(dp(1));
 
-        panelPaint.setColor(Color.argb(168, 255, 255, 255));
+        panelPaint.setColor(night ? Color.argb(178, 42, 37, 48) : Color.argb(168, 255, 255, 255));
 
-        glassStrokePaint.setColor(Color.argb(152, 255, 255, 255));
+        glassStrokePaint.setColor(night ? Color.argb(96, 255, 255, 255) : Color.argb(152, 255, 255, 255));
         glassStrokePaint.setStyle(Paint.Style.STROKE);
         glassStrokePaint.setStrokeWidth(dp(1));
 
@@ -106,12 +110,12 @@ public class ClockRadialMenuView extends View {
         scrollTrackPaint.setStrokeWidth(dp(2));
         scrollTrackPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        scrollThumbPaint.setColor(Color.argb(215, 255, 255, 255));
+        scrollThumbPaint.setColor(night ? Color.argb(215, 230, 220, 235) : Color.argb(215, 255, 255, 255));
         scrollThumbPaint.setStyle(Paint.Style.STROKE);
         scrollThumbPaint.setStrokeWidth(dp(3));
         scrollThumbPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        textPaint.setColor(Color.rgb(42, 34, 39));
+        textPaint.setColor(night ? Color.rgb(240, 236, 245) : Color.rgb(42, 34, 39));
         textPaint.setTextSize(dp(13));
         textPaint.setFakeBoldText(true);
 
@@ -121,7 +125,7 @@ public class ClockRadialMenuView extends View {
         hubRingPaint.setStyle(Paint.Style.STROKE);
         hubRingPaint.setStrokeWidth(dp(2));
 
-        scrimPaint.setColor(Color.argb(82, 24, 17, 22));
+        scrimPaint.setColor(night ? Color.argb(120, 10, 8, 12) : Color.argb(82, 24, 17, 22));
 
         badgePaint.setColor(Color.rgb(197, 46, 70));
         badgeTextPaint.setColor(Color.WHITE);
@@ -130,19 +134,58 @@ public class ClockRadialMenuView extends View {
         badgeTextPaint.setFakeBoldText(true);
     }
 
+    private boolean isNightMode() {
+        int uiMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return uiMode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
     private void buildItems() {
         items.clear();
         addItem(R.id.nav_home, "对话", R.drawable.ic_home);
+        addItem(R.id.nav_conversations, "对话列表", R.drawable.ic_home);
+        addItem(R.id.nav_call, "实时通话", R.drawable.ic_call);
         addItem(R.id.nav_profile, "个人中心", R.drawable.ic_edit);
         addItem(R.id.nav_forum, "社区论坛", R.drawable.ic_forum);
         addItem(R.id.nav_messages, "我的私信", R.drawable.ic_send);
+        addItem(R.id.nav_center, "信息中心", R.drawable.ic_notifications);
+        addItem(R.id.nav_persona, "投稿中心", R.drawable.ic_manage);
+        if (adminVisible) {
+            addItem(R.id.nav_admin, "管理中心", R.drawable.ic_admin);
+        }
         if (sponsorVisible) {
             addItem(R.id.nav_model, "模型选择", R.drawable.ic_manage);
         }
         addItem(R.id.nav_balance, "我的积分", R.drawable.ic_info);
+        addItem(R.id.nav_bubble, "悬浮窗聊天", R.drawable.ic_bubble);
+        addItem(R.id.nav_dark_mode, darkModeEnabled ? "暗黑模式：开" : "暗黑模式", R.drawable.ic_dark_mode);
+        addItem(R.id.nav_update, "检查更新", R.drawable.ic_restore);
         addItem(R.id.nav_background, "更换背景", R.drawable.ic_image);
         addItem(R.id.nav_reset_background, "恢复背景", R.drawable.ic_restore);
         addItem(R.id.nav_logout, "退出账号", R.drawable.ic_logout);
+    }
+
+    /**
+     * 更新暗黑模式开关的菜单显示状态
+     */
+    public void setDarkModeEnabled(boolean enabled) {
+        if (darkModeEnabled != enabled) {
+            darkModeEnabled = enabled;
+            buildItems();
+            invalidate();
+        }
+    }
+
+    /**
+     * 更新悬浮窗聊天开关的菜单显示状态
+     */
+    public void setBubbleEnabled(boolean enabled) {
+        for (MenuItem item : items) {
+            if (item.id == R.id.nav_bubble) {
+                item.label = enabled ? "悬浮窗：已开" : "悬浮窗聊天";
+                invalidate();
+                return;
+            }
+        }
     }
 
     private void addItem(int id, String label, int iconResource) {
@@ -157,6 +200,17 @@ public class ClockRadialMenuView extends View {
     public void setSponsorVisible(boolean visible) {
         if (sponsorVisible != visible) {
             sponsorVisible = visible;
+            buildItems();
+            invalidate();
+        }
+    }
+
+    /**
+     * 设置管理员可见性（仅数据库 username=zipad 的账户可见管理中心）
+     */
+    public void setAdminVisible(boolean visible) {
+        if (adminVisible != visible) {
+            adminVisible = visible;
             buildItems();
             invalidate();
         }
@@ -244,14 +298,14 @@ public class ClockRadialMenuView extends View {
         canvas.drawText(ellipsize(accountName, 14), plate.left + dp(12), plate.top + dp(18), textPaint);
         textPaint.setFakeBoldText(false);
         textPaint.setTextSize(dp(10));
-        textPaint.setColor(Color.rgb(112, 96, 103));
+        textPaint.setColor(isNightMode() ? Color.rgb(190, 182, 196) : Color.rgb(112, 96, 103));
         canvas.drawText(ellipsize(accountHandle, 18), plate.left + dp(12), plate.top + dp(33), textPaint);
         if (!accountSignature.isEmpty()) {
             canvas.drawText(ellipsize(accountSignature, 18), plate.left + dp(12), plate.top + dp(47), textPaint);
         }
         textPaint.setFakeBoldText(true);
         textPaint.setTextSize(dp(13));
-        textPaint.setColor(Color.rgb(42, 34, 39));
+        textPaint.setColor(isNightMode() ? Color.rgb(240, 236, 245) : Color.rgb(42, 34, 39));
     }
 
     private String ellipsize(String value, int maxLength) {
@@ -351,7 +405,8 @@ public class ClockRadialMenuView extends View {
 
     private void drawUnreadBadge(Canvas canvas, MenuItem item, float progress) {
         int unreadCount = item.id == R.id.nav_forum ? forumUnreadCount
-                : item.id == R.id.nav_messages ? privateMessageUnreadCount : 0;
+                : item.id == R.id.nav_messages ? privateMessageUnreadCount
+                : item.id == R.id.nav_center ? forumUnreadCount + privateMessageUnreadCount : 0;
         if (unreadCount <= 0) {
             return;
         }

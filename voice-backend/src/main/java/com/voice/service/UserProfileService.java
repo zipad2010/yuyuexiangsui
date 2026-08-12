@@ -47,7 +47,8 @@ public class UserProfileService {
         profile.put("totalUsage", user.getTotalUsage());
         profile.put("status", user.getStatus());
         profile.put("createdAt", user.getCreatedAt());
-        profile.put("isSponsor", user.getIsSponsor() == 1);
+        // 使用 null 安全比较，避免老用户 is_sponsor 列为 NULL 时拆箱 NPE
+        profile.put("isSponsor", Integer.valueOf(1).equals(user.getIsSponsor()));
         profile.put("nickname", user.getNickname() == null ? user.getUsername() : user.getNickname());
         profile.put("signature", user.getSignature() == null ? "" : user.getSignature());
         profile.put("avatarUrl", user.getAvatarUrl() == null ? "" : user.getAvatarUrl());

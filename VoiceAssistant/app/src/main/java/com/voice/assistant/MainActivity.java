@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.provider.Settings;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -32,6 +33,8 @@ import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -72,6 +75,7 @@ public class MainActivity extends WallpaperActivity {
     private AudioPlayer audioPlayer;
     private MediaPlayer startSoundPlayer;
     private Handler mainHandler;
+    private UpdateManager updateManager;
     
     private boolean isRecording = false;
     private AudioRecord audioRecord;
@@ -79,8 +83,13 @@ public class MainActivity extends WallpaperActivity {
     // 赞助者相关
     private boolean isSponsor = false;
     
+    /** 上次加载历史的会话 id（用于 onResume 检测切换） */
+    private long lastConversationId = -1L;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 应用暗黑模式偏好（切换后重建时生效）
+        applyNightMode(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
@@ -109,6 +118,10 @@ public class MainActivity extends WallpaperActivity {
         NotificationHelper.createChannel(this);
         requestNotificationPermission();
         refreshNotifications();
+
+        // 应用内检查更新：每天自动检查一次（静默），用户可手动触发
+        updateManager = new UpdateManager(this);
+        updateManager.checkForUpdateDaily();
     }
 
     private void playStartSound() {
@@ -165,6 +178,7 @@ public class MainActivity extends WallpaperActivity {
                 audioPlayer.playBase64Audio(msg.getAudioBase64(), null);
             }
         });
+        adapter.setOnItemLongClickListener(position -> handleMessageLongClick(position));
         
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
         rvMessages.setAdapter(adapter);
@@ -176,6 +190,7 @@ public class MainActivity extends WallpaperActivity {
 
         showLocalAccountInfo();
         restoreCustomBackground();
+        clockMenu.setDarkModeEnabled(isDarkModeEnabled(this));
 
         playEntranceAnimation();
         
@@ -209,6 +224,19 @@ public class MainActivity extends WallpaperActivity {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }).start();
+        // 检查管理员身份（username=zipad），决定是否展示管理中心
+        new Thread(() -> {
+            try {
+                JSONObject json = new JSONObject(apiClient.isAdmin(tokenManager.getToken()));
+                boolean isAdmin = json.optInt("code") == 200 && json.optBoolean("data", false);
+                runOnUiThread(() -> {
+                    if (clockMenu != null) {
+                        clockMenu.setAdminVisible(isAdmin);
+                    }
+                });
+            } catch (Exception ignored) {
             }
         }).start();
     }
@@ -341,7 +369,20 @@ public class MainActivity extends WallpaperActivity {
         if (clockMenu != null && tokenManager != null && tokenManager.isLoggedIn()) {
             showLocalAccountInfo();
             loadUserProfile();
+            // 同步悬浮窗开关状态（例如从系统设置授权后返回）
+            clockMenu.setBubbleEnabled(FloatingBubbleService.isRunning);
             refreshNotifications();
+            // 从对话列表切换/创建会话返回后，自动刷新当前会话历史
+            reloadIfConversationChanged();
+        }
+    }
+
+    /** 会话 id 变化时重新加载历史（切换对话后无需重进即可生效） */
+    private void reloadIfConversationChanged() {
+        long current = getCurrentConversationId();
+        if (lastConversationId != current) {
+            lastConversationId = current;
+            loadChatHistory();
         }
     }
 
@@ -395,16 +436,35 @@ public class MainActivity extends WallpaperActivity {
     private void handleMenuAction(int id) {
         if (id == R.id.nav_home) {
             return;
+        } else if (id == R.id.nav_conversations) {
+            startActivity(new Intent(this, ConversationListActivity.class));
+        } else if (id == R.id.nav_call) {
+            startActivity(new Intent(this, CallActivity.class));
         } else if (id == R.id.nav_profile) {
             startActivity(new Intent(this, ProfileActivity.class));
         } else if (id == R.id.nav_forum) {
             startActivity(new Intent(this, ForumActivity.class));
         } else if (id == R.id.nav_messages) {
             startActivity(new Intent(this, MessagesActivity.class));
+        } else if (id == R.id.nav_center) {
+            startActivity(new Intent(this, InfoCenterActivity.class));
+        } else if (id == R.id.nav_persona) {
+            startActivity(new Intent(this, PersonaCenterActivity.class));
+        } else if (id == R.id.nav_admin) {
+            startActivity(new Intent(this, AdminCenterActivity.class));
         } else if (id == R.id.nav_model) {
             startActivity(new Intent(this, ModelSelectActivity.class));
         } else if (id == R.id.nav_balance) {
             Toast.makeText(this, "当前积分 " + tokenManager.getBalance(), Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_bubble) {
+            toggleFloatingBubble();
+        } else if (id == R.id.nav_dark_mode) {
+            toggleDarkMode();
+        } else if (id == R.id.nav_update) {
+            Toast.makeText(this, "正在检查更新...", Toast.LENGTH_SHORT).show();
+            if (updateManager != null) {
+                updateManager.checkForUpdate(true);
+            }
         } else if (id == R.id.nav_background) {
             backgroundPicker.launch(new String[]{"image/*"});
         } else if (id == R.id.nav_reset_background) {
@@ -414,6 +474,51 @@ public class MainActivity extends WallpaperActivity {
             startLoginActivity();
             finish();
         }
+    }
+
+    /**
+     * 切换暗黑模式：持久化偏好并触发主题重建
+     */
+    private void toggleDarkMode() {
+        boolean dark = !isDarkModeEnabled(this);
+        getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_DARK_MODE, dark)
+                .apply();
+        if (clockMenu != null) {
+            clockMenu.setDarkModeEnabled(dark);
+        }
+        AppCompatDelegate.setDefaultNightMode(dark
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO);
+        Toast.makeText(this, dark ? "已开启暗黑模式" : "已切换为明亮模式",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 悬浮窗聊天开关：开启时启动 FloatingBubbleService，关闭时停止
+     */
+    private void toggleFloatingBubble() {
+        if (FloatingBubbleService.isRunning) {
+            stopService(new Intent(this, FloatingBubbleService.class));
+            if (clockMenu != null) {
+                clockMenu.setBubbleEnabled(false);
+            }
+            Toast.makeText(this, "悬浮窗已关闭", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "需要悬浮窗权限，请在设置中允许", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+            return;
+        }
+        startService(new Intent(this, FloatingBubbleService.class));
+        if (clockMenu != null) {
+            clockMenu.setBubbleEnabled(true);
+        }
+        Toast.makeText(this, "悬浮窗已开启，点击悬浮球即可聊天", Toast.LENGTH_SHORT).show();
     }
 
     private void setChatBlurred(boolean blurred) {
@@ -469,6 +574,71 @@ public class MainActivity extends WallpaperActivity {
         }
         fabVoice.animate().scaleX(1f).scaleY(1f).setDuration(160L).start();
     }
+
+    /**
+     * 当前选中的对话会话 id（从对话列表切换/创建）；0 表示默认会话
+     */
+    private long getCurrentConversationId() {
+        return getSharedPreferences("voice_prefs", MODE_PRIVATE)
+                .getLong("current_conversation_id", 0);
+    }
+
+    /**
+     * 长按消息：仅用户发送的消息可撤回，撤回后该消息不记录、不再作为 AI 上下文
+     */
+    private void handleMessageLongClick(int position) {
+        if (position < 0 || position >= messages.size()) {
+            return;
+        }
+        Message msg = messages.get(position);
+        if (!msg.isUser()) {
+            Toast.makeText(this, "只能撤回自己发送的消息", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (msg.getHistoryId() <= 0) {
+            Toast.makeText(this, "该消息无法撤回", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("撤回消息")
+                .setMessage("撤回后该消息将不再显示，也不会作为 AI 的对话记忆")
+                .setPositiveButton("撤回", (dialog, which) -> recallMessage(position, msg))
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void recallMessage(int position, Message msg) {
+        final long historyId = msg.getHistoryId();
+        new Thread(() -> {
+            try {
+                JSONObject json = new JSONObject(
+                        apiClient.deleteChatHistory(historyId, tokenManager.getToken()));
+                runOnUiThread(() -> {
+                    if (json.optInt("code") == 200) {
+                        // 本地移除该消息及其后的 AI 回复
+                        int endIndex = position + 1;
+                        while (endIndex < messages.size() && !messages.get(endIndex).isUser()) {
+                            endIndex++;
+                        }
+                        List<Message> removed = new ArrayList<>(
+                                messages.subList(position, endIndex));
+                        messages.removeAll(removed);
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(this, "已撤回", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, json.optString("message", "撤回失败"),
+                                Toast.LENGTH_SHORT).show();
+                        loadChatHistory();
+                    }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "网络错误: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    loadChatHistory();
+                });
+            }
+        }).start();
+    }
     
     private void loadBalance() {
         new Thread(() -> {
@@ -490,10 +660,10 @@ public class MainActivity extends WallpaperActivity {
 
     private void loadChatHistory() {
         setChatInputEnabled(false);
+        final long conversationId = getCurrentConversationId();
         new Thread(() -> {
             try {
-                JSONObject json = new JSONObject(apiClient.getChatHistory(tokenManager.getToken()));
-                JSONArray data = json.optJSONArray("data");
+                JSONObject json = new JSONObject(apiClient.getChatHistory(tokenManager.getToken(), conversationId));                JSONArray data = json.optJSONArray("data");
                 List<Message> historyMessages = new ArrayList<>();
                 if (json.optInt("code") == 200 && data != null) {
                     for (int index = 0; index < data.length(); index++) {
@@ -503,7 +673,9 @@ public class MainActivity extends WallpaperActivity {
                         }
                         String content = item.optString("content", "").trim();
                         if (!content.isEmpty()) {
-                            historyMessages.add(new Message(content, "user".equals(item.optString("role"))));
+                            Message historyMessage = new Message(content, "user".equals(item.optString("role")));
+                            historyMessage.setHistoryId(item.optLong("id", 0));
+                            historyMessages.add(historyMessage);
                         }
                     }
                 }
@@ -601,12 +773,13 @@ public class MainActivity extends WallpaperActivity {
         
         String selectedModel = apiClient.getSelectedModel();
         boolean enableThinking = apiClient.isEnableThinking();
+        final long conversationId = getCurrentConversationId();
         
         new Thread(() -> {
             try {
                 String response;
                 response = apiClient.voiceChat(audioData, tokenManager.getToken(),
-                                                selectedModel, enableThinking, null);
+                                                selectedModel, enableThinking, null, conversationId);
                 JSONObject json = new JSONObject(response);
                 
                 runOnUiThread(() -> {
@@ -651,12 +824,13 @@ public class MainActivity extends WallpaperActivity {
         
         String selectedModel = apiClient.getSelectedModel();
         boolean enableThinking = apiClient.isEnableThinking();
+        final long conversationId = getCurrentConversationId();
         
         new Thread(() -> {
             try {
                 String response;
                 response = apiClient.textChat(text, tokenManager.getToken(),
-                                               selectedModel, enableThinking, null);
+                                               selectedModel, enableThinking, null, conversationId);
                 JSONObject json = new JSONObject(response);
                 
                 runOnUiThread(() -> {

@@ -22,6 +22,8 @@ app:
     avatar-url-base: ${AVATAR_URL_BASE:/uploads/avatars/}
     wallpaper-path: ${WALLPAPER_UPLOAD_PATH:/www/wwwroot/voice-backend/uploads/wallpapers/}
     wallpaper-url-base: ${WALLPAPER_URL_BASE:/uploads/wallpapers/}
+    post-media-path: ${POST_MEDIA_UPLOAD_PATH:/www/wwwroot/voice-backend/uploads/posts/}
+    post-media-url-base: ${POST_MEDIA_URL_BASE:/uploads/posts/}
 
 api:
   baidu:
@@ -36,9 +38,20 @@ fc:
   gpt-sovits:
     url: http://127.0.0.1:8000
 
+mimo:
+  tts:
+    url: ${MIMO_TTS_URL:https://api.xiaomimimo.com/v1/chat/completions}
+    api-key: ${MIMO_TTS_API_KEY:YOUR_MIMO_TTS_API_KEY}
+    model: ${MIMO_TTS_MODEL:mimo-v2.5-tts-voicedesign}
+    reference-audio-path: ${MIMO_TTS_REFERENCE_AUDIO:/www/1.wav}
+
 jwt:
   secret: REPLACE_WITH_A_LONG_RANDOM_SECRET
   expiration: 86400000
+
+# 管理员账户（数据库中 username 为以下值的账号为管理员）
+admin:
+  username: ${ADMIN_USERNAME:zipad}
 
 pricing:
   asr-per-second: 0.0001

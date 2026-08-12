@@ -66,7 +66,10 @@
                     android:layout_height="wrap_content"
                     android:hint="昵称"
                     android:maxLength="32"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="15sp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -83,7 +86,10 @@
                     android:layout_height="wrap_content"
                     android:hint="个性签名"
                     android:maxLength="120"
-                    android:maxLines="3" />
+                    android:maxLines="3"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="15sp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

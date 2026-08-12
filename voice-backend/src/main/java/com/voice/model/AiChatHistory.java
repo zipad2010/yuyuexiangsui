@@ -13,6 +13,10 @@ public class AiChatHistory {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    /** 所属对话会话 id；为 null 表示旧数据（归入默认会话） */
+    @Column(name = "conversation_id")
+    private Long conversationId;
+
     @Column(nullable = false, length = 16)
     private String role;
 
@@ -25,6 +29,8 @@ public class AiChatHistory {
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+    public Long getConversationId() { return conversationId; }
+    public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public String getContent() { return content; }

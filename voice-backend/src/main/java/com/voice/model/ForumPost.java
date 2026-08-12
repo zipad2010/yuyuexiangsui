@@ -15,7 +15,14 @@ public class ForumPost {
 
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
+
+    /**
+     * 媒体资源 JSON 数组字符串，如 ["/uploads/posts/xxx.jpg","/uploads/posts/yyy.mp4"]
+     */
+    @Column(name = "media_urls", columnDefinition = "TEXT")
+    private String mediaUrls;
 
     @Column(name = "like_count")
     private Integer likeCount = 0;
@@ -63,6 +70,14 @@ public class ForumPost {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getMediaUrls() {
+        return mediaUrls;
+    }
+
+    public void setMediaUrls(String mediaUrls) {
+        this.mediaUrls = mediaUrls;
     }
 
     public Integer getLikeCount() {

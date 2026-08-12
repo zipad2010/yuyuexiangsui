@@ -1,5 +1,6 @@
 package com.voice.assistant;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
 
@@ -16,6 +18,23 @@ public class WallpaperActivity extends AppCompatActivity {
 
     static final String UI_PREFS_NAME = "ui_preferences";
     static final String KEY_BACKGROUND_URI = "custom_background_uri";
+    static final String KEY_DARK_MODE = "dark_mode_enabled";
+
+    /**
+     * 在 Activity 内容创建前应用暗黑模式（应在 super.onCreate 之前调用）
+     */
+    static void applyNightMode(Context context) {
+        boolean dark = context.getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(KEY_DARK_MODE, false);
+        AppCompatDelegate.setDefaultNightMode(dark
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO);
+    }
+
+    static boolean isDarkModeEnabled(Context context) {
+        return context.getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(KEY_DARK_MODE, false);
+    }
 
     private ImageView wallpaperView;
 

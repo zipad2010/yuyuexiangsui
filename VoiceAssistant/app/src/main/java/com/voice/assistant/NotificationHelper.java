@@ -1,14 +1,17 @@
 package com.voice.assistant;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 public final class NotificationHelper {
     private static final String CHANNEL_ID = "community_messages";
@@ -29,6 +32,12 @@ public final class NotificationHelper {
 
     public static void updateSummary(Context context, int forumUnread, int messageUnread) {
         int totalUnread = forumUnread + messageUnread;
+        // Android 13+ 需 POST_NOTIFICATIONS 权限才能发送通知，无权限时直接跳过
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         if (totalUnread <= 0) {
             NotificationManagerCompat.from(context).cancel(SUMMARY_NOTIFICATION_ID);
             return;

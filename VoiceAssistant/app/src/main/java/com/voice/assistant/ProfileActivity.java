@@ -36,7 +36,9 @@ public class ProfileActivity extends WallpaperActivity {
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
         if (!tokenManager.isLoggedIn()) {
-            startActivity(new Intent(this, LoginActivity.class));
+            Intent loginIntent = new Intent(this, LoginActivity.class);
+            loginIntent.putExtra("return_to_profile", true);
+            startActivity(loginIntent);
             finish();
             return;
         }
@@ -140,7 +142,9 @@ public class ProfileActivity extends WallpaperActivity {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         if (code == 401) {
             tokenManager.clear();
-            startActivity(new Intent(this, LoginActivity.class));
+            Intent loginIntent = new Intent(this, LoginActivity.class);
+            loginIntent.putExtra("return_to_profile", true);
+            startActivity(loginIntent);
             finishAffinity();
         }
     }

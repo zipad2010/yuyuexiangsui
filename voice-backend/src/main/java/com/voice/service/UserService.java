@@ -49,6 +49,10 @@ public class UserService {
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
+
+    public UserRepository getUserRepository() {
+        return userRepository;
+    }
     
     public int getPoints(Long userId) {
         return balanceService.getPoints(userId);

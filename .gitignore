@@ -16,3 +16,9 @@ voice-backend/target/
 .env
 .env.*
 application-local.yml
+
+# 素材文件（未授权分发）：图标与音频及其副本
+START.wav
+图标.png
+VoiceAssistant/app/src/main/res/drawable-nodpi/
+VoiceAssistant/app/src/main/res/raw/

@@ -8,9 +8,12 @@ import android.os.Looper;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.json.JSONObject;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -22,6 +25,8 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 必须在 super.onCreate 之前应用暗黑模式，否则主题不会切换
+        WallpaperActivity.applyNightMode(this);
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
@@ -75,9 +80,41 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void openNextScreen() {
-        Class<?> destination = new TokenManager(this).isLoggedIn()
-                ? HomeActivity.class
-                : LoginActivity.class;
+        TokenManager tokenManager = new TokenManager(this);
+        if (tokenManager.isLoggedIn()) {
+            // 有本地登录态：后台验证 token 是否仍有效（防止退登后看不出）
+            verifyLoginAndContinue(tokenManager);
+        } else {
+            goTo(LoginActivity.class);
+        }
+    }
+
+    /** 后台校验 token，无效则清除本地登录态并跳登录页 */
+    private void verifyLoginAndContinue(TokenManager tokenManager) {
+        new Thread(() -> {
+            boolean valid = false;
+            try {
+                JSONObject json = new JSONObject(
+                        new ApiClient(this).getUserInfo(tokenManager.getToken()));
+                valid = json.optInt("code") == 200;
+            } catch (Exception ignored) {
+                // 网络异常时不强制登出，保留本地登录态
+                valid = true;
+            }
+            final boolean finalValid = valid;
+            runOnUiThread(() -> {
+                if (finalValid) {
+                    goTo(HomeActivity.class);
+                } else {
+                    tokenManager.clear();
+                    Toast.makeText(this, "登录已失效，请重新登录", Toast.LENGTH_SHORT).show();
+                    goTo(LoginActivity.class);
+                }
+            });
+        }).start();
+    }
+
+    private void goTo(Class<?> destination) {
         startActivity(new Intent(this, destination));
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();

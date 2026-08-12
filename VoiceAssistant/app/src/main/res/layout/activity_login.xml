@@ -51,7 +51,7 @@
             android:layout_height="56dp"
             android:hint="用户名"
             android:inputType="text"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -71,7 +71,7 @@
             android:layout_height="56dp"
             android:hint="密码"
             android:inputType="textPassword"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>

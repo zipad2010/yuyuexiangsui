@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 品牌色（夜间保持同品牌，可略调亮） -->
+    <color name="primary">#E0485F</color>
+    <color name="primary_dark">#8F2438</color>
+    <color name="primary_soft">#3A2026</color>
+    <color name="accent">#F26D7A</color>
+    <color name="purple_500">#E0485F</color>
+    <color name="purple_700">#A91F31</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- 基础表面（夜间：深色半透明毛玻璃） -->
+    <color name="surface">#A6242129</color>
+    <color name="surface_strong">#CC2A2530</color>
+    <color name="background">#121014</color>
+    <color name="page_overlay">#59121014</color>
+    <color name="panel">#A6242129</color>
+    <color name="panel_strong">#CC2A2530</color>
+    <color name="panel_stroke">#33FFFFFF</color>
+    <color name="toolbar_bg">#FF15121A</color>
+
+    <!-- 文字（夜间：浅色） -->
+    <color name="text_primary">#F2EEF5</color>
+    <color name="text_secondary">#C9C3CE</color>
+    <color name="text_muted">#8F8A96</color>
+
+    <!-- 描边 -->
+    <color name="outline">#33FFFFFF</color>
+    <color name="glass_stroke">#40FFFFFF</color>
+
+    <!-- 云母（Mica）渐变：夜间深色云母 -->
+    <color name="mica_start">#2B1A22</color>
+    <color name="mica_center">#1E1A24</color>
+    <color name="mica_end">#141A22</color>
+    <color name="mica_overlay">#1AFFFFFF</color>
+</resources>

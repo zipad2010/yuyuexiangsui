@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/floating_chat_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_floating_chat"
+    android:elevation="12dp">
+
+    <!-- 可拖动标题栏 -->
+    <LinearLayout
+        android:id="@+id/floating_chat_header"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp"
+        android:background="@drawable/bg_toolbar">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_bubble"
+            android:contentDescription="悬浮聊天" />
+
+        <TextView
+            android:id="@+id/floating_chat_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="悬浮聊天"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/floating_chat_close"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_close"
+            android:contentDescription="关闭"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerInside" />
+
+    </LinearLayout>
+
+    <!-- 消息列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/floating_rv_messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"
+        android:background="@android:color/transparent" />
+
+    <!-- 输入区 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        android:background="@color/panel_strong">
+
+        <EditText
+            android:id="@+id/floating_et_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="44dp"
+            android:maxLines="3"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_composer"
+            android:hint="输入消息..."
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="15sp" />
+
+        <ImageButton
+            android:id="@+id/floating_btn_send"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="6dp"
+            android:src="@drawable/ic_send"
+            android:contentDescription="发送"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/primary" />
+
+    </LinearLayout>
+
+</LinearLayout>

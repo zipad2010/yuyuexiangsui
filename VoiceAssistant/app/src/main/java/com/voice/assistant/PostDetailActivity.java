@@ -26,6 +26,7 @@ public class PostDetailActivity extends WallpaperActivity {
     private long postId;
     private TextView tvPostTitle;
     private TextView tvPostContent;
+    private android.widget.LinearLayout llPostMedia;
     
     public static android.content.Intent newIntent(android.content.Context context, long postId) {
         android.content.Intent intent = new android.content.Intent(context, PostDetailActivity.class);
@@ -55,6 +56,7 @@ public class PostDetailActivity extends WallpaperActivity {
     
     private void initViews() {
         tvPostTitle = findViewById(R.id.tv_post_title);
+        llPostMedia = findViewById(R.id.ll_post_media);
         tvPostContent = findViewById(R.id.tv_post_content);
         rvReplies = findViewById(R.id.rv_replies);
         etReply = findViewById(R.id.et_reply);
@@ -74,8 +76,11 @@ public class PostDetailActivity extends WallpaperActivity {
                 if (json.optInt("code", -1) == 200) {
                     JSONObject data = json.optJSONObject("data");
                     if (data != null) {
-                        final String title = data.optString("title", "");
-                        final String content = data.optString("content", "");
+                        // 后端返回结构：data.post { title, content, ... } + data.replies
+                        JSONObject post = data.optJSONObject("post");
+                        final String title = post != null ? post.optString("title", "") : "";
+                        final String content = post != null ? post.optString("content", "") : "";
+                        final JSONArray mediaUrls = post != null ? post.optJSONArray("mediaUrls") : null;
                         final JSONArray repliesArray = data.optJSONArray("replies");
                         List<JSONObject> newReplies = new ArrayList<>();
                         if (repliesArray != null) {
@@ -86,6 +91,7 @@ public class PostDetailActivity extends WallpaperActivity {
                         runOnUiThread(() -> {
                             tvPostTitle.setText(title);
                             tvPostContent.setText(content);
+                            renderMedia(mediaUrls);
                             replies.clear();
                             replies.addAll(newReplies);
                             adapter.notifyDataSetChanged();
@@ -96,6 +102,48 @@ public class PostDetailActivity extends WallpaperActivity {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    /** 动态渲染帖子媒体：图片用 ImageView + Glide，视频用 VideoView（点击播放） */
+    private void renderMedia(JSONArray mediaUrls) {
+        llPostMedia.removeAllViews();
+        if (mediaUrls == null || mediaUrls.length() == 0) {
+            return;
+        }
+        for (int i = 0; i < mediaUrls.length(); i++) {
+            String url = mediaUrls.optString(i, "");
+            if (url.isEmpty()) {
+                continue;
+            }
+            String resolved = ApiClient.resolveResourceUrl(url);
+            boolean isVideo = url.toLowerCase().matches(".*\\.(mp4|webm|mkv|mov|3gp|avi)$")
+                    || url.toLowerCase().contains("/video/");
+            if (isVideo) {
+                android.widget.VideoView videoView = new android.widget.VideoView(this);
+                videoView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 220));
+                videoView.setVideoPath(resolved);
+                videoView.setOnClickListener(v -> {
+                    if (videoView.isPlaying()) {
+                        videoView.pause();
+                    } else {
+                        videoView.start();
+                    }
+                });
+                android.widget.MediaController controller = new android.widget.MediaController(this);
+                videoView.setMediaController(controller);
+                llPostMedia.addView(videoView);
+            } else {
+                android.widget.ImageView imageView = new android.widget.ImageView(this);
+                imageView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+                imageView.setAdjustViewBounds(true);
+                imageView.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                com.bumptech.glide.Glide.with(this).load(resolved).into(imageView);
+                llPostMedia.addView(imageView);
+            }
+        }
     }
     
     private void sendReply() {

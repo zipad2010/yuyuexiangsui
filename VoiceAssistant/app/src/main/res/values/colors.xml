@@ -1,19 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 品牌色 -->
     <color name="primary">#C82F48</color>
     <color name="primary_dark">#761F36</color>
     <color name="primary_soft">#F9E8EC</color>
     <color name="accent">#E65D69</color>
-    <color name="surface">#A6FFFFFF</color>
-    <color name="surface_strong">#C2FFFFFF</color>
-    <color name="background">#FFFFFFFF</color>
-    <color name="text_primary">#211E23</color>
-    <color name="text_secondary">#625F68</color>
-    <color name="text_muted">#8B8791</color>
-    <color name="outline">#80FFFFFF</color>
-    <color name="glass_stroke">#B3FFFFFF</color>
     <color name="purple_500">#D73545</color>
     <color name="purple_700">#A91F31</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+
+    <!-- 基础表面（毛玻璃：半透明层叠） -->
+    <color name="surface">#B3FFFFFF</color>
+    <color name="surface_strong">#D9FFFFFF</color>
+    <color name="background">#F2F5F9</color>
+    <color name="page_overlay">#6BFFFFFF</color>
+    <color name="panel">#99FFFFFF</color>
+    <color name="panel_strong">#C7FFFFFF</color>
+    <color name="panel_stroke">#4DFFFFFF</color>
+    <color name="toolbar_bg">#FF1C1822</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#211E23</color>
+    <color name="text_secondary">#55505C</color>
+    <color name="text_muted">#8B8791</color>
+
+    <!-- 描边 -->
+    <color name="outline">#59FFFFFF</color>
+    <color name="glass_stroke">#66FFFFFF</color>
+
+    <!-- 云母（Mica）渐变：模拟 Windows 11 云母材质 -->
+    <color name="mica_start">#FBE7EC</color>
+    <color name="mica_center">#F2EDF5</color>
+    <color name="mica_end">#E6F0F3</color>
+    <color name="mica_overlay">#40FFFFFF</color>
 </resources>

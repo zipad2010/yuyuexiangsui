@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 页面根背景：半透明毛玻璃层，露出下方云母渐变/自定义壁纸 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#00FFFFFF" />
+    <solid android:color="@color/page_overlay" />
 </shape>

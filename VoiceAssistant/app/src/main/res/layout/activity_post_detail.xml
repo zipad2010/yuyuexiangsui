@@ -52,6 +52,14 @@
                 android:textSize="15sp"
                 android:textColor="@color/text_primary" />
 
+            <!-- 帖子媒体区：动态添加 ImageView/VideoView -->
+            <LinearLayout
+                android:id="@+id/ll_post_media"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical" />
+
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>

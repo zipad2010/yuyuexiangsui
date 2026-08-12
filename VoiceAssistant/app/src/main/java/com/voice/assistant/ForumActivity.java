@@ -1,17 +1,22 @@
 package com.voice.assistant;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +28,10 @@ public class ForumActivity extends WallpaperActivity {
     private TokenManager tokenManager;
     private List<JSONObject> posts;
     private ForumAdapter adapter;
+
+    private final List<String> pendingMediaUrls = new ArrayList<>();
+    private ActivityResultLauncher<String[]> imagePicker;
+    private ActivityResultLauncher<String[]> videoPicker;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +40,19 @@ public class ForumActivity extends WallpaperActivity {
         
         apiClient = new ApiClient(this);
         tokenManager = new TokenManager(this);
+
+        imagePicker = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(), uri -> {
+                    if (uri != null) {
+                        uploadSelectedMedia(uri, true);
+                    }
+                });
+        videoPicker = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(), uri -> {
+                    if (uri != null) {
+                        uploadSelectedMedia(uri, false);
+                    }
+                });
         
         initViews();
         loadPosts();
@@ -88,10 +110,17 @@ public class ForumActivity extends WallpaperActivity {
     }
     
     private void showNewPostDialog() {
+        pendingMediaUrls.clear();
         View view = getLayoutInflater().inflate(R.layout.dialog_new_post, null);
         EditText etTitle = view.findViewById(R.id.et_title);
         EditText etContent = view.findViewById(R.id.et_content);
-        
+        TextView tvMediaStatus = view.findViewById(R.id.tv_media_status);
+
+        view.findViewById(R.id.btn_pick_image).setOnClickListener(v ->
+                imagePicker.launch(new String[]{"image/*"}));
+        view.findViewById(R.id.btn_pick_video).setOnClickListener(v ->
+                videoPicker.launch(new String[]{"video/*"}));
+
         new AlertDialog.Builder(this)
             .setTitle("发布帖子")
             .setView(view)
@@ -99,17 +128,76 @@ public class ForumActivity extends WallpaperActivity {
                 String title = etTitle.getText().toString().trim();
                 String content = etContent.getText().toString().trim();
                 if (!title.isEmpty() && !content.isEmpty()) {
-                    createPost(title, content);
+                    createPost(title, content, new ArrayList<>(pendingMediaUrls));
                 }
             })
             .setNegativeButton("取消", null)
             .show();
     }
-    
-    private void createPost(String title, String content) {
+
+    private void uploadSelectedMedia(Uri uri, boolean isImage) {
         new Thread(() -> {
             try {
-                String response = apiClient.createForumPost(title, content, tokenManager.getToken());
+                byte[] data = readBytes(uri);
+                if (data.length > 50 * 1024 * 1024) {
+                    throw new IllegalArgumentException("媒体文件不能超过 50MB");
+                }
+                String mimeType = getContentResolver().getType(uri);
+                if (mimeType == null) {
+                    mimeType = isImage ? "image/jpeg" : "video/mp4";
+                }
+                String fileName = getDisplayName(uri);
+                String response = apiClient.uploadForumMedia(data, fileName, mimeType, tokenManager.getToken());
+                JSONObject json = new JSONObject(response);
+                runOnUiThread(() -> {
+                    if (json.optInt("code") == 200) {
+                        JSONObject dataObj = json.optJSONObject("data");
+                        String url = dataObj == null ? null : dataObj.optString("url", null);
+                        if (url != null && !url.isEmpty()) {
+                            pendingMediaUrls.add(url);
+                            Toast.makeText(this, "媒体已添加：" + fileName, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(this, json.optString("message", "媒体上传失败"), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "上传失败: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private byte[] readBytes(Uri uri) throws Exception {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) {
+                throw new IllegalArgumentException("无法读取所选文件");
+            }
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                output.write(buffer, 0, count);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    private String getDisplayName(Uri uri) {
+        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    return cursor.getString(index);
+                }
+            }
+        }
+        return "media.jpg";
+    }
+    
+    private void createPost(String title, String content, List<String> mediaUrls) {
+        new Thread(() -> {
+            try {
+                String response = apiClient.createForumPostWithMedia(title, content, mediaUrls, tokenManager.getToken());
                 JSONObject json = new JSONObject(response);
                 int code = json.getInt("code");
                 String message = json.optString("message", "Posted");
@@ -126,9 +214,8 @@ public class ForumActivity extends WallpaperActivity {
             }
         }).start();
     }
-    
+
     private void showPostDetail(long postId) {
-        // 打开帖子详情页
         startActivity(PostDetailActivity.newIntent(this, postId));
     }
 }

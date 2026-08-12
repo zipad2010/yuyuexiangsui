@@ -16,14 +16,23 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     
     private List<Message> messages;
     private OnPlayClickListener playClickListener;
+    private OnItemLongClickListener longClickListener;
     
     public interface OnPlayClickListener {
         void onPlayClick(int position);
     }
     
+    public interface OnItemLongClickListener {
+        void onItemLongClick(int position);
+    }
+    
     public ChatAdapter(List<Message> messages, OnPlayClickListener listener) {
         this.messages = messages;
         this.playClickListener = listener;
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
     }
     
     @NonNull
@@ -47,6 +56,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             holder.llReceived.setVisibility(View.VISIBLE);
             holder.tvReceived.setText(msg.getContent());
         }
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(holder.getBindingAdapterPosition());
+                return true;
+            }
+            return false;
+        });
     }
     
     @Override

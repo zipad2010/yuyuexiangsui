@@ -31,7 +31,10 @@ public class BalanceService {
         }
 
         user.setPoints(user.getPoints() - 1);
-        user.setTotalUsage(user.getTotalUsage().add(BigDecimal.ONE));
+        // total_usage 对老用户可能为 NULL，需 null 安全累加
+        user.setTotalUsage(user.getTotalUsage() == null
+                ? BigDecimal.ONE
+                : user.getTotalUsage().add(BigDecimal.ONE));
         userRepository.save(user);
         
         UsageRecord record = new UsageRecord();

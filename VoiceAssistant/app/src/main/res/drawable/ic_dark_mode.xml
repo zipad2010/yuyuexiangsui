@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 暗黑模式切换图标：月亮 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#667eea"
+        android:pathData="M12,3c-4.97,0 -9,4.03 -9,9s4.03,9 9,9c0.83,0 1.64,-0.11 2.41,-0.32C10.54,18.86 8,15.71 8,12s2.54,-6.86 5.41,-7.68C13.64,3.11 12.83,3 12,3z" />
+</vector>

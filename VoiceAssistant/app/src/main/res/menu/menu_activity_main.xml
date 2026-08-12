@@ -7,6 +7,16 @@
         android:title="首页" />
 
     <item
+        android:id="@+id/nav_conversations"
+        android:icon="@drawable/ic_home"
+        android:title="对话列表" />
+
+    <item
+        android:id="@+id/nav_call"
+        android:icon="@drawable/ic_call"
+        android:title="实时通话" />
+
+    <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/ic_edit"
         android:title="个人中心" />
@@ -21,6 +31,22 @@
         android:icon="@drawable/ic_send"
         android:title="私信" />
 
+    <item
+        android:id="@+id/nav_center"
+        android:icon="@drawable/ic_notifications"
+        android:title="信息中心" />
+
+    <item
+        android:id="@+id/nav_persona"
+        android:icon="@drawable/ic_manage"
+        android:title="投稿中心" />
+
+    <!-- 管理中心（仅管理员可见） -->
+    <item
+        android:id="@+id/nav_admin"
+        android:icon="@drawable/ic_admin"
+        android:title="管理中心" />
+
     <!-- 模型切换菜单项（仅赞助者可见） -->
     <item
         android:id="@+id/nav_model"
@@ -31,6 +57,21 @@
         android:id="@+id/nav_balance"
         android:icon="@drawable/ic_info"
         android:title="积分" />
+
+    <item
+        android:id="@+id/nav_bubble"
+        android:icon="@drawable/ic_bubble"
+        android:title="悬浮窗聊天" />
+
+    <item
+        android:id="@+id/nav_dark_mode"
+        android:icon="@drawable/ic_dark_mode"
+        android:title="暗黑模式" />
+
+    <item
+        android:id="@+id/nav_update"
+        android:icon="@drawable/ic_restore"
+        android:title="检查更新" />
 
     <item
         android:id="@+id/nav_background"

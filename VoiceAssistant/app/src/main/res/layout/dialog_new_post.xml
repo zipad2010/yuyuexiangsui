@@ -15,7 +15,9 @@
             android:id="@+id/et_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="标题" />
+            android:hint="标题"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -31,8 +33,46 @@
             android:layout_height="wrap_content"
             android:hint="正文"
             android:minLines="5"
-            android:gravity="top" />
+            android:gravity="top"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- 媒体选择按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_pick_image"
+            style="@style/AppPrimaryButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="添加图片" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_pick_video"
+            style="@style/AppPrimaryButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="添加视频" />
+
+    </LinearLayout>
+
+    <!-- 已选媒体预览（图片缩略图） -->
+    <TextView
+        android:id="@+id/tv_media_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/accent"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
 </LinearLayout>

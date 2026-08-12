@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 应用内更新：安装 APK 需要 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +20,17 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.VoiceAssistant"
         android:usesCleartextTraffic="true">
+        
+        <!-- 应用内更新：APK FileProvider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.voice.assistant.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
         
         <activity
             android:name=".SplashActivity"
@@ -28,10 +44,15 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".HomeActivity" />
         
-        <activity android:name=".MainActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize" />
         
         <!-- 个人中心 -->
         <activity android:name=".ProfileActivity" />
+        
+        <!-- 实时通话 -->
+        <activity android:name=".CallActivity" />
         
         <!-- 论坛 -->
         <activity android:name=".ForumActivity" />
@@ -40,6 +61,28 @@
         <!-- 私信 -->
         <activity android:name=".MessagesActivity" />
         <activity android:name=".ChatActivity" />
+        
+        <!-- 信息中心 -->
+        <activity android:name=".InfoCenterActivity" />
+
+        <!-- 管理中心（仅管理员） -->
+        <activity android:name=".AdminCenterActivity" />
+        
+        <!-- 对话列表 -->
+        <activity android:name=".ConversationListActivity" />
+        
+        <!-- 投稿中心 -->
+        <activity android:name=".PersonaCenterActivity" />
+
+        <!-- 悬浮窗聊天服务 -->
+        <service
+            android:name=".FloatingBubbleService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="floating chat bubble for quick conversation" />
+        </service>
         
         <!-- 模型切换（赞助者专用） -->
         <activity android:name=".ModelSelectActivity" />
